@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">WeatherSync</string>
+    <string name="appName">WeatherSync</string>
 </resources>
