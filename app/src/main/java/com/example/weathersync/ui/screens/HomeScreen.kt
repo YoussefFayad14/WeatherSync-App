@@ -1,6 +1,7 @@
 package com.example.weathersync.ui.screens
 
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,11 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,20 +22,22 @@ import androidx.compose.ui.tooling.preview.Devices.PIXEL_5
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
 import com.example.weathersync.R
+import com.example.weathersync.navigation.BottomNavigationBar
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavHostController) {
     val isDarkMode = isSystemInDarkTheme()
     val backgroundColor = if (isDarkMode) DeepNavyBlue else LightSeaGreen
 
     Scaffold(
-        bottomBar = { BottomNavigationBar() },
         containerColor = backgroundColor
-    ) { paddingValues ->
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -47,17 +45,14 @@ fun HomeScreen() {
         ) {
             LottieBackground()
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                modifier = Modifier.fillMaxSize()
             ) {
-                WeatherContent(
-                    modifier = Modifier.weight(1f)
-                )
+                HomeScreenContent(navController)
             }
         }
     }
 }
+
 
 
 @Composable
@@ -80,9 +75,9 @@ fun LottieBackground() {
 }
 
 @Composable
-fun WeatherContent(modifier: Modifier = Modifier) {
+fun HomeScreenContent(navController: NavHostController) {
     LazyColumn(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -209,7 +204,6 @@ fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String, iconRes: Int, 
         }
     }
 }
-
 
 @Composable
 fun TemperatureDisplay(temperature: String,type: String) {
@@ -388,7 +382,8 @@ fun NextDaysForecast() {
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(4.dp),
+                    .padding(4.dp)
+                    .border(1.dp, Color.White, RoundedCornerShape(14.dp)),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.1f))
@@ -425,53 +420,9 @@ fun NextDaysForecast() {
     }
 }
 
-@Composable
-fun BottomNavigationBar() {
-    val backgroundColor = if (isSystemInDarkTheme()) Color.Black else Color.White
-
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        colors = CardDefaults.cardColors(backgroundColor),
-        elevation = CardDefaults.elevatedCardElevation(8.dp)
-    ) {
-        NavigationBar(
-            containerColor = backgroundColor,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            NavigationBarItem(
-                icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-                label = { Text(text = "Home", maxLines = 1) },
-                selected = true,
-                onClick = {}
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Filled.Favorite, contentDescription = "Favorite") },
-                label = { Text(text = "Favorite", maxLines = 1) },
-                selected = false,
-                onClick = {}
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Filled.Notifications, contentDescription = "Notifications") },
-                label = { Text(text = "Notification", maxLines = 1) },
-                selected = false,
-                onClick = {}
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
-                label = { Text(text = "Settings", maxLines = 1) },
-                selected = false,
-                onClick = {}
-            )
-        }
-    }
-}
-
 
 @Preview(showBackground = true, showSystemUi = true, device = PIXEL_5)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen()
+    //HomeScreen()
 }
