@@ -17,14 +17,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
 import com.example.weathersync.R
+import com.example.weathersync.navigation.ScreenRoute
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen() {
+fun SplashScreen(navController: NavHostController) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_animation))
     val progress by animateLottieCompositionAsState(
         composition = composition,
@@ -37,6 +39,9 @@ fun SplashScreen() {
         delay(1500)
         showText = true
         delay(1500)
+        navController.navigate(ScreenRoute.HomeScreenRoute.route) {
+            popUpTo(ScreenRoute.SplashScreenRoute.route) { inclusive = true }
+        }
     }
 
     val textAlpha by animateFloatAsState(
@@ -75,5 +80,5 @@ fun SplashScreen() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SplashScreenPreview() {
-    SplashScreen()
+   // SplashScreen()
 }
