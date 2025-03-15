@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "2.1.10"
+    id("com.google.devtools.ksp")
+
 
 }
 
@@ -48,6 +50,32 @@ dependencies {
     //navigation
     implementation ("androidx.navigation:navigation-compose:2.4.0-alpha06")
     implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+
+    //location
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
+
+    //retrofit
+    implementation ("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    //glide
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
+
+    //room
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+
+
+
+    //livedata & viewmodel
+    val compose_version = "1.0.0"
+    implementation ("androidx.compose.runtime:runtime-livedata:$compose_version")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose-android:2.8.7")
+
 
 
 
