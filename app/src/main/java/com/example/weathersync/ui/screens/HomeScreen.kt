@@ -1,7 +1,8 @@
 package com.example.weathersync.ui.screens
 
 
-import android.annotation.SuppressLint
+import  android.annotation.SuppressLint
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,9 +14,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Devices.PIXEL_5
@@ -25,15 +28,26 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
 import com.example.weathersync.R
-import com.example.weathersync.navigation.BottomNavigationBar
+import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.viewmodel.WeatherViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewModel) {
+    val context = LocalContext.current
+    val activity = context as? Activity
     val isDarkMode = isSystemInDarkTheme()
     val backgroundColor = if (isDarkMode) DeepNavyBlue else LightSeaGreen
+    val location = weatherViewModel.locationLiveData.observeAsState()
+    val message = weatherViewModel.message.observeAsState()
+    val isLoading = remember { mutableStateOf(true) }
+
+    LaunchedEffect(activity) {
+        activity?.let { weatherViewModel.getLocation(it) }
+        isLoading.value = false
+    }
 
     Scaffold(
         containerColor = backgroundColor
@@ -43,17 +57,24 @@ fun HomeScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .background(color = backgroundColor)
         ) {
-            LottieBackground()
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                HomeScreenContent(navController)
+            if (!isLoading.value) {
+                LottieBackground()
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    HomeScreenContent(navController, message.value.orEmpty())
+                }
+            } else {
+                val progressColor= if (isDarkMode) LightSeaGreen else DeepNavyBlue
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .background(progressColor)
+                )
             }
         }
     }
 }
-
-
 
 @Composable
 fun LottieBackground() {
@@ -75,11 +96,12 @@ fun LottieBackground() {
 }
 
 @Composable
-fun HomeScreenContent(navController: NavHostController) {
+fun HomeScreenContent(navController: NavHostController,message : String) {
+    AnimatedSnackBar(message)
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(start = 8.dp, top = 0.dp, bottom = 8.dp, end = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item { DayFeelsLike(
