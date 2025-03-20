@@ -78,12 +78,13 @@ dependencies {
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
 
-
-    
     //livedata & viewmodel
     val compose_version = "1.0.0"
     implementation ("androidx.compose.runtime:runtime-livedata:$compose_version")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose-android:2.8.7")
+
+    //pull refresh
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.28.0")
 
 
 

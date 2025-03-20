@@ -3,6 +3,8 @@ package com.example.weathersync.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import android.content.Context
+import com.example.weathersync.data.local.LocalWeatherDataSource
+import com.example.weathersync.data.local.WeatherDatabase
 import com.example.weathersync.data.remote.RemoteWeatherDataSource
 import com.example.weathersync.data.remote.RetrofitClient
 import com.example.weathersync.data.remote.WeatherApiService
@@ -13,7 +15,10 @@ class WeatherViewModelFactory(private val context: Context) : ViewModelProvider.
         if (modelClass.isAssignableFrom(WeatherViewModel::class.java)) {
             return WeatherViewModel(
                 context,
-                WeatherRepositoryImpl(RemoteWeatherDataSource(RetrofitClient.instance))
+                WeatherRepositoryImpl(
+                    RemoteWeatherDataSource(RetrofitClient.instance),
+                    LocalWeatherDataSource(WeatherDatabase.getInstance(context).weatherDao())
+                )
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

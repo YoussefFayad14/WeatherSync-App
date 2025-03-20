@@ -4,20 +4,23 @@ import android.app.Activity
 import android.content.Context
 import android.location.Geocoder
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weathersync.R
+import com.example.weathersync.data.mapper.*
 import com.example.weathersync.data.model.Response
 import com.example.weathersync.data.model.remote.CurrentWeatherResponse
 import com.example.weathersync.data.model.remote.ForecastResponse
 import com.example.weathersync.data.model.remote.Item
 import com.example.weathersync.data.repository.WeatherRepositoryImpl
 import com.example.weathersync.utils.LocationProvider
-import com.example.weathersync.utils.SharedPreferencesHelper
+import com.example.weathersync.data.mapper.toCurrentWeatherResponse
+import com.example.weathersync.data.model.local.WeatherEntity
+import com.example.weathersync.utils.NetworkHelper
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
@@ -28,24 +31,70 @@ import java.time.LocalDate
 import java.util.*
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
+import kotlin.time.Duration.Companion.seconds
 
 class WeatherViewModel(private val context: Context, private val repository: WeatherRepositoryImpl) : ViewModel() {
 
     private val locationProvider = LocationProvider(context)
-    private val _locationLiveData = MutableLiveData<Pair<Double, Double>?>()
-    val locationLiveData: LiveData<Pair<Double, Double>?> = _locationLiveData
+    private val _location = MutableStateFlow<Pair<Double?, Double>?>(Pair(0.0, 0.0))
+    val location: StateFlow<Pair<Double?, Double>?> = _location.asStateFlow()
     private val _message = MutableStateFlow("")
     val message = _message.asStateFlow()
-    private val _currentWeather = MutableStateFlow<Response<CurrentWeatherResponse>>(Response.Loading)
+    private val _currentWeather = MutableStateFlow<Response<WeatherEntity>>(Response.Loading)
     val currentWeather = _currentWeather.asStateFlow()
     private val _forecastWeather = MutableStateFlow<Response<ForecastResponse>>(Response.Loading)
     val forecastWeather = _forecastWeather.asStateFlow()
 
-    fun loadCurrentWeather(lat: Double, lon: Double) {
+    fun loadCurrentWeather() {
         viewModelScope.launch {
-            repository.getCurrentWeather(lat, lon)
-                .catch { ex -> _message.value = "Error: ${ex.message}"}
-                .collect { response -> _currentWeather.value = response }
+            getCurrentLocation(context as Activity)
+            val lastLocation = repository.getLastLocation()
+            val currentTime = System.currentTimeMillis()
+            val threeHoursMillis = 3 * 60 * 60 * 1000
+
+            if (lastLocation != null && location.value != null
+                && location.value!!.first != 0.0 && location.value!!.second != 0.0
+                && lastLocation.first.toInt() == location.value?.first?.toInt()
+                && lastLocation.second.toInt() == location.value?.second?.toInt()
+                && currentTime - lastLocation.third < threeHoursMillis
+            ) {
+                repository.getCachedWeather()
+                    .catch { ex -> _message.value = "Error: ${ex.message}" }
+                    .collect { response ->
+                        if (response is Response.Success) {
+                            response.data?.map {
+                                _currentWeather.value = Response.Success(it)
+                            }
+                        }
+                    }
+            } else {
+                if (NetworkHelper.isNetworkAvailable(context)) {
+                    repository.getCurrentWeather(location.value!!.first!!, location.value!!.second)
+                        .catch { ex -> _message.value = "Error: ${ex.message}" }
+                        .collect { response ->
+                            if (response is Response.Success) {
+                                response.data?.let {
+                                    val weatherEntity = it.toWeatherEntity()
+                                    weatherEntity.address = getAddressFromLocation()
+                                    repository.clearWeather()
+                                    repository.saveWeather(weatherEntity)
+                                    _currentWeather.value = Response.Success(weatherEntity)
+                                }
+                            }
+                        }
+                } else {
+                    _message.value = "No Internet Connection"
+                    repository.getCachedWeather()
+                        .catch { ex -> _message.value = "Error: ${ex.message}" }
+                        .collect { response ->
+                            if (response is Response.Success) {
+                                response.data?.map {
+                                    _currentWeather.value = Response.Success(it)
+                                }
+                            }
+                        }
+                }
+            }
         }
     }
 
@@ -168,25 +217,17 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
         } as Int
     }
 
-    fun getLocation(activity: Activity) {
+    fun getCurrentLocation(activity: Activity){
         locationProvider.getUserLocation(
             callback = { latitude, longitude ->
-                _locationLiveData.postValue(Pair(latitude, longitude))
-                if (latitude != null && longitude != null && latitude != 0.0 && longitude != 0.0) {
-                    if (SharedPreferencesHelper.getLocation(context) == null){
-                        SharedPreferencesHelper.saveLocation(context, latitude, longitude)
-                    }else{
-                        val savedLocation = SharedPreferencesHelper.getLocation(context)
-                        if (savedLocation?.first !=latitude && savedLocation?.second !=longitude){
-                            SharedPreferencesHelper.saveLocation(context, latitude, longitude)
-                        }
-                    }
-                } else {
-                    _message.value =("Location not available")
+                if (latitude == null || longitude == null || (latitude == 0.0 && longitude == 0.0)) {
+                    _message.value = "Location not available"
+                }else{
+                    _location.value = Pair(latitude, longitude)
                 }
             },
             onError = { message ->
-                _message.value = (message)
+                _message.value = message
             },
             activity = activity
         )
@@ -195,8 +236,12 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
     fun getAddressFromLocation(): String {
         val geocoder = Geocoder(context, Locale.getDefault())
 
-        return locationLiveData.value?.let { location ->
-            geocoder.getFromLocation(location.first, location.second, 1)
+        return location.value?.let { location ->
+            geocoder.getFromLocation(
+                location.first?.toDouble() ?: 0.0,
+                location.second?.toDouble() ?: 0.0,
+                1
+            )
 
         }?.getOrNull(0)?.getAddressLine(0)?.let { address ->
             address

@@ -2,9 +2,7 @@ package com.example.weathersync.ui.screens
 
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,14 +15,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices.PIXEL_5
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,7 +33,7 @@ import com.airbnb.lottie.compose.*
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.weathersync.R
 import com.example.weathersync.data.model.Response
-import com.example.weathersync.data.model.remote.CurrentWeatherResponse
+import com.example.weathersync.data.model.local.WeatherEntity
 import com.example.weathersync.data.model.remote.ForecastResponse
 import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.components.HourlyForecastItem
@@ -44,82 +41,90 @@ import com.example.weathersync.ui.components.WeatherDetailItem
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.viewmodel.WeatherViewModel
-import java.sql.Date
-import java.text.SimpleDateFormat
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewModel) {
     val context = LocalContext.current
-    val activity = context as? Activity
     val isDarkMode = isSystemInDarkTheme()
     val backgroundColor = if (isDarkMode) DeepNavyBlue else LightSeaGreen
-    val location = weatherViewModel.locationLiveData.observeAsState()
+    val location = weatherViewModel.location.collectAsStateWithLifecycle()
     val currentWeather by weatherViewModel.currentWeather.collectAsStateWithLifecycle()
     val forecastData by weatherViewModel.forecastWeather.collectAsStateWithLifecycle()
     val message by weatherViewModel.message.collectAsStateWithLifecycle()
+    var isRefreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberSwipeRefreshState(isRefreshing)
 
     LaunchedEffect(Unit) {
-        activity?.let {
-            weatherViewModel.getLocation(it)
-            Log.d("HomeScreen", "Location: ${location.value}")
-        }
+        weatherViewModel.loadCurrentWeather()
     }
 
-    LaunchedEffect(location.value) {
-        location.value?.let { (lat, lon) ->
-            weatherViewModel.loadCurrentWeather(lat, lon)
-            weatherViewModel.loadForecast(lat, lon)
-            Log.d("HomeScreen", "Current Weather: ${currentWeather}")
-            Log.d("HomeScreen", "Forecast: ${forecastData}")
+    SwipeRefresh(
+        state = refreshState,
+        onRefresh = {
+            isRefreshing = true
+            weatherViewModel.loadCurrentWeather()
+            isRefreshing = false
+        },
+        indicator = { state, trigger ->
+            SwipeRefreshIndicator(
+                state = state,
+                refreshTriggerDistance = trigger,
+                backgroundColor = backgroundColor,
+                contentColor = if (isDarkMode) LightSeaGreen else DeepNavyBlue
+            )
         }
-    }
-
-    Scaffold(
-        containerColor = backgroundColor
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = backgroundColor),
-            contentAlignment = Alignment.Center
+        Scaffold(
+            containerColor = backgroundColor
         ) {
-            when (currentWeather) {
-                is Response.Loading -> {
-                    CircularProgressIndicator(
-                        color = if (isDarkMode) LightSeaGreen else DeepNavyBlue
-                    )
-                }
-                is Response.Success -> {
-                    val currentWeatherResponse = (currentWeather as Response.Success).data
-                    val forecastResponse = (forecastData as? Response.Success)?.data
-
-                    LottieBackground()
-                    Column(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        HomeScreenContent(
-                            navController,
-                            weatherViewModel,
-                            currentWeatherResponse,
-                            forecastResponse,
-                            message
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = backgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
+                when (currentWeather) {
+                    is Response.Loading -> {
+                        CircularProgressIndicator(
+                            color = if (isDarkMode) LightSeaGreen else DeepNavyBlue
                         )
                     }
-                }
-                is Response.Failure -> {
-                    val errorMessage = (currentWeather as Response.Failure).error.message ?: "Unknown error"
+                    is Response.Success -> {
+                        val currentWeatherResponse = (currentWeather as? Response.Success)?.data
+                        val forecastResponse = (forecastData as? Response.Success)?.data
 
-                    Text(
-                        text = "Error: $errorMessage",
-                        color = Color.Red,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                        LottieBackground()
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            HomeScreenContent(
+                                navController,
+                                weatherViewModel,
+                                currentWeatherResponse,
+                                forecastResponse,
+                                message
+                            )
+                        }
+                    }
+                    is Response.Failure -> {
+                        val errorMessage = (currentWeather as Response.Failure).error.message ?: "Unknown error"
+
+                        Text(
+                            text = "Error: $errorMessage",
+                            color = Color.Red,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
                 }
 
             }
-            AnimatedSnackBar(message)
         }
     }
 }
@@ -148,7 +153,7 @@ fun LottieBackground() {
 fun HomeScreenContent(
     navController: NavHostController,
     viewModel: WeatherViewModel,
-    currentWeather: CurrentWeatherResponse,
+    currentWeather: WeatherEntity?,
     forecastData: ForecastResponse?,
     message: String
 ) {
@@ -160,27 +165,24 @@ fun HomeScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item { DayFeelsLike(
-            weatherCondition = currentWeather.weather?.firstOrNull()?.description ?:"Unknown",
-            feelsLikeTemp = currentWeather
-                .main?.feelsLike?.toDouble()?.let {
-                    viewModel.convertTemperature(it,"kelvin","celsius")
-                }.toString(),
-            iconCode = viewModel.getWeatherIcon(currentWeather.weather?.firstOrNull()?.icon ?: ""),
-            dayLabel = "Today",
+            weatherCondition = currentWeather!!.description,
+            feelsLikeTemp = viewModel.convertTemperature(currentWeather.feels_like,
+                stringResource(R.string.kelvin), stringResource(R.string.celsius)
+            ),
+            iconCode = viewModel.getWeatherIcon(currentWeather.icon),
+            dayLabel = stringResource(R.string.today),
             dateLabel = viewModel.getCurrentDay()
         )
         }
         item { Spacer(modifier = Modifier.height(20.dp)) }
         item { TemperatureDisplay(
-                temperature = currentWeather.main?.temp?.toDouble()?.let {
-                viewModel.convertTemperature(it,"kelvin","celsius")
-            }.toString(),
+                temperature = viewModel.convertTemperature(currentWeather!!.temp,"kelvin","celsius"),
                 type = "C"
             )
         }
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { Text(
-            text = viewModel.getAddressFromLocation(),
+            text = currentWeather.let { it?.address ?: "Unknown Address" },
             fontSize = 14.sp,
             color = Color.White)
         }
@@ -192,21 +194,23 @@ fun HomeScreenContent(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Text(
-                    text = "Daily Details",
+                    text = stringResource(R.string.daily_details),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
             }
         }
-        item { currentWeather.let {
-            DailyDetails(
-                pressure = it.main?.pressure?.toString() ?: "N/A",
-                windSpeed = it.wind?.speed?.toString() ?: "N/A",
-                humidity = it.main?.humidity?.toString() ?: "N/A",
-                clouds = it.clouds?.all?.toString() ?: "N/A"
-            )
-        } ?: run { Text(text = "Loading or No Data", color = Color.White)}}
+        item {
+            currentWeather.let {
+                DailyDetails(
+                    pressure = it?.pressure?.toString() ?: "N/A",
+                    windSpeed = it?.speed?.toString() ?: "N/A",
+                    humidity = it?.humidity?.toString() ?: "N/A",
+                    clouds = it?.clouds?.toString() ?: "N/A"
+                )
+            }
+        }
         item { Spacer(modifier = Modifier.height(16.dp)) }
         item {
             Row(
@@ -373,7 +377,9 @@ fun SunsetSunriseRow(viewModel: WeatherViewModel, sunrise: Int?, sunset: Int?) {
 fun HourlyDetails(viewModel: WeatherViewModel, forecastData: ForecastResponse?) {
     val hourlyList = viewModel.getHourlyForecastForToday(forecastData?.list?.filterNotNull() ?: emptyList())
     LazyRow(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         items(hourlyList.size) { index ->
