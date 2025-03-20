@@ -20,4 +20,8 @@
     <string name="map">Map</string>
     <string name="meter_sec">Meter/Sec</string>
     <string name="mile_hour">Mile/Hour</string>
+    <string name="today">Today</string>
+    <string name="kelvin">kelvin</string>
+    <string name="celsius">celsius</string>
+    <string name="daily_details">Daily Details</string>
 </resources>
