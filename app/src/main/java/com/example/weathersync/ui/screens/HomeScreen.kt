@@ -18,7 +18,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,8 +32,9 @@ import com.airbnb.lottie.compose.*
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.weathersync.R
 import com.example.weathersync.data.model.Response
+import com.example.weathersync.data.model.local.DailyForecast
+import com.example.weathersync.data.model.local.ForecastEntity
 import com.example.weathersync.data.model.local.WeatherEntity
-import com.example.weathersync.data.model.remote.ForecastResponse
 import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.components.HourlyForecastItem
 import com.example.weathersync.ui.components.WeatherDetailItem
@@ -44,16 +44,13 @@ import com.example.weathersync.viewmodel.WeatherViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewModel) {
-    val context = LocalContext.current
     val isDarkMode = isSystemInDarkTheme()
     val backgroundColor = if (isDarkMode) DeepNavyBlue else LightSeaGreen
-    val location = weatherViewModel.location.collectAsStateWithLifecycle()
     val currentWeather by weatherViewModel.currentWeather.collectAsStateWithLifecycle()
     val forecastData by weatherViewModel.forecastWeather.collectAsStateWithLifecycle()
     val message by weatherViewModel.message.collectAsStateWithLifecycle()
@@ -62,6 +59,7 @@ fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewMo
 
     LaunchedEffect(Unit) {
         weatherViewModel.loadCurrentWeather()
+        weatherViewModel.loadForecast()
     }
 
     SwipeRefresh(
@@ -69,6 +67,7 @@ fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewMo
         onRefresh = {
             isRefreshing = true
             weatherViewModel.loadCurrentWeather()
+            weatherViewModel.loadForecast()
             isRefreshing = false
         },
         indicator = { state, trigger ->
@@ -154,7 +153,7 @@ fun HomeScreenContent(
     navController: NavHostController,
     viewModel: WeatherViewModel,
     currentWeather: WeatherEntity?,
-    forecastData: ForecastResponse?,
+    forecastData: ForecastEntity?,
     message: String
 ) {
     AnimatedSnackBar(message)
@@ -166,7 +165,7 @@ fun HomeScreenContent(
     ) {
         item { DayFeelsLike(
             weatherCondition = currentWeather!!.description,
-            feelsLikeTemp = viewModel.convertTemperature(currentWeather.feels_like,
+            feelsLikeTemp = viewModel.convertTemperature(currentWeather.feelsLike,
                 stringResource(R.string.kelvin), stringResource(R.string.celsius)
             ),
             iconCode = viewModel.getWeatherIcon(currentWeather.icon),
@@ -186,7 +185,7 @@ fun HomeScreenContent(
             fontSize = 14.sp,
             color = Color.White)
         }
-        item { SunsetSunriseRow(viewModel, forecastData?.city?.sunrise, forecastData?.city?.sunset) }
+        item { SunsetSunriseRow(viewModel, forecastData?.sunrise?.toInt() , forecastData?.sunset?.toInt()) }
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
             Row(
@@ -201,16 +200,14 @@ fun HomeScreenContent(
                 )
             }
         }
-        item {
-            currentWeather.let {
+        item { currentWeather.let {
                 DailyDetails(
                     pressure = it?.pressure?.toString() ?: "N/A",
                     windSpeed = it?.speed?.toString() ?: "N/A",
                     humidity = it?.humidity?.toString() ?: "N/A",
                     clouds = it?.clouds?.toString() ?: "N/A"
                 )
-            }
-        }
+            } }
         item { Spacer(modifier = Modifier.height(16.dp)) }
         item {
             Row(
@@ -225,7 +222,7 @@ fun HomeScreenContent(
                 )
             }
         }
-        item { HourlyDetails(viewModel,forecastData) }
+        item { HourlyDetails(viewModel, forecastData?.dailyForecasts) }
         item { Spacer(modifier = Modifier.height(16.dp)) }
         item {
             Row(
@@ -240,7 +237,7 @@ fun HomeScreenContent(
                 )
             }
         }
-        item { NextDaysForecast(viewModel, forecastData) }
+        item { NextDaysForecast(viewModel, forecastData?.dailyForecasts) }
     }
 }
 
@@ -349,7 +346,6 @@ fun SunsetSunriseRow(viewModel: WeatherViewModel, sunrise: Int?, sunset: Int?) {
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
-            Text(text = "PM", color = Color.White, fontSize = 12.sp)
         }
         Spacer(modifier = Modifier.width(16.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -367,24 +363,23 @@ fun SunsetSunriseRow(viewModel: WeatherViewModel, sunrise: Int?, sunset: Int?) {
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
-            Text(text = "AM", color = Color.White, fontSize = 12.sp)
         }
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HourlyDetails(viewModel: WeatherViewModel, forecastData: ForecastResponse?) {
-    val hourlyList = viewModel.getHourlyForecastForToday(forecastData?.list?.filterNotNull() ?: emptyList())
+fun HourlyDetails(viewModel: WeatherViewModel, forecastData: List<DailyForecast>?) {
+    val hourlyForecast = viewModel.getHourlyForecastForToday(forecastData)
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        items(hourlyList.size) { index ->
-            val (time, temp, icon) = hourlyList[index]
-            HourlyForecastItem(time.toString(), temp, icon)
+        items(hourlyForecast.size) { index ->
+            val (time, temp, icon) = hourlyForecast[index]
+            HourlyForecastItem(time, temp, icon)
         }
     }
 }
@@ -426,15 +421,15 @@ fun DailyDetails(pressure: String, windSpeed: String, humidity: String, clouds: 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NextDaysForecast(viewModel: WeatherViewModel, forecastData: ForecastResponse?) {
-    val nextDaysList = viewModel.getNextDaysForecast(forecastData?.list?.filterNotNull() ?: emptyList())
+fun NextDaysForecast(viewModel: WeatherViewModel, forecastData: List<DailyForecast>?) {
+    val nextDaysForecast = viewModel.getNextDaysForecast(forecastData)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp)
     ) {
-        nextDaysList.forEach { (day, temp, icon) ->
+        nextDaysForecast.forEach { (date, temp, icon) ->
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -454,20 +449,20 @@ fun NextDaysForecast(viewModel: WeatherViewModel, forecastData: ForecastResponse
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = viewModel.getDayNameFromDate(day),
+                            text = viewModel.getDayNameFromDate(date),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = day,
+                            text = date,
                             fontSize = 16.sp,
                             color = Color.White
                         )
                     }
 
                     Image(
-                        painter = painterResource(id = icon),
+                        painter = painterResource(icon),
                         contentDescription = "Weather Icon",
                         modifier = Modifier
                             .size(32.dp)
@@ -475,7 +470,7 @@ fun NextDaysForecast(viewModel: WeatherViewModel, forecastData: ForecastResponse
                     )
 
                     Text(
-                        text = "${temp.toDouble().toInt()}°C",
+                        text = "${temp}°C",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -487,7 +482,6 @@ fun NextDaysForecast(viewModel: WeatherViewModel, forecastData: ForecastResponse
         }
     }
 }
-
 
 @Preview(showBackground = true, showSystemUi = true, device = PIXEL_5)
 @Composable

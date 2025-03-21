@@ -4,10 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.example.weathersync.data.model.local.Converters
 import com.example.weathersync.data.model.local.ForecastEntity
 import com.example.weathersync.data.model.local.WeatherEntity
 
 @Database(entities = [WeatherEntity::class, ForecastEntity::class], version = 1, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class WeatherDatabase : RoomDatabase() {
 
     abstract fun weatherDao(): WeatherDao
