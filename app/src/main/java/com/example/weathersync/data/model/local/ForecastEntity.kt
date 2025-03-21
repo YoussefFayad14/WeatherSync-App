@@ -7,8 +7,9 @@ import androidx.room.PrimaryKey
 data class ForecastEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val dateTime: String,
-    val temperature: Double,
-    val description: String,
-    val windSpeed: Double
+    val coordLat: Double,
+    val coordLon: Double,
+    val sunrise: Long,
+    val sunset: Long,
+    val dailyForecasts: List<DailyForecast>
 )

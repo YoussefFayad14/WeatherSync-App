@@ -11,12 +11,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.weathersync.R
 import com.example.weathersync.data.mapper.*
 import com.example.weathersync.data.model.Response
-import com.example.weathersync.data.model.remote.CurrentWeatherResponse
-import com.example.weathersync.data.model.remote.ForecastResponse
+import com.example.weathersync.data.model.local.DailyForecast
+import com.example.weathersync.data.model.local.ForecastEntity
 import com.example.weathersync.data.model.remote.Item
 import com.example.weathersync.data.repository.WeatherRepositoryImpl
 import com.example.weathersync.utils.LocationProvider
-import com.example.weathersync.data.mapper.toCurrentWeatherResponse
 import com.example.weathersync.data.model.local.WeatherEntity
 import com.example.weathersync.utils.NetworkHelper
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,10 +30,8 @@ import java.time.LocalDate
 import java.util.*
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import kotlin.time.Duration.Companion.seconds
 
 class WeatherViewModel(private val context: Context, private val repository: WeatherRepositoryImpl) : ViewModel() {
-
     private val locationProvider = LocationProvider(context)
     private val _location = MutableStateFlow<Pair<Double?, Double>?>(Pair(0.0, 0.0))
     val location: StateFlow<Pair<Double?, Double>?> = _location.asStateFlow()
@@ -42,11 +39,10 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
     val message = _message.asStateFlow()
     private val _currentWeather = MutableStateFlow<Response<WeatherEntity>>(Response.Loading)
     val currentWeather = _currentWeather.asStateFlow()
-    private val _forecastWeather = MutableStateFlow<Response<ForecastResponse>>(Response.Loading)
+    private val _forecastWeather = MutableStateFlow<Response<ForecastEntity>>(Response.Loading)
     val forecastWeather = _forecastWeather.asStateFlow()
 
-    fun loadCurrentWeather() {
-        viewModelScope.launch {
+    fun loadCurrentWeather() { viewModelScope.launch {
             getCurrentLocation(context as Activity)
             val lastLocation = repository.getLastLocation()
             val currentTime = System.currentTimeMillis()
@@ -95,14 +91,47 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
                         }
                 }
             }
-        }
-    }
+        } }
 
-    fun loadForecast(lat: Double, lon: Double) {
+    fun loadForecast() {
         viewModelScope.launch {
-            repository.getForecast(lat, lon)
-                .catch { ex -> _message.value = "Error: ${ex.message}"}
-                .collect { response -> _forecastWeather.value = response }
+            if (location.value != null && location.value!!.first != 0.0 && location.value!!.second != 0.0) {
+                repository.getCachedForecast()
+                    .catch { ex -> _message.value = "Error: ${ex.message}" }
+                    .collect { response ->
+                        if (response is Response.Success) {
+                            response.data.map {
+                                _forecastWeather.value = Response.Success(it)
+                            }
+                        }
+                    }
+            } else {
+                if (NetworkHelper.isNetworkAvailable(context)) {
+                    repository.getForecast(location.value!!.first!!, location.value!!.second)
+                        .catch { ex -> _message.value = "Error: ${ex.message}" }
+                        .collect { response ->
+                            if (response is Response.Success) {
+                                response.data.let {
+                                    val forecastEntity = it.toForecastEntity()
+                                    repository.clearForecast()
+                                    repository.saveForecast(forecastEntity)
+                                    _forecastWeather.value = Response.Success(forecastEntity)
+                                }
+                            }
+                        }
+                } else {
+                    _message.value = "No Internet Connection"
+                    repository.getCachedForecast()
+                        .catch { ex -> _message.value = "Error: ${ex.message}" }
+                        .collect { response ->
+                            if (response is Response.Success) {
+                                response.data?.map {
+                                    _forecastWeather.value = Response.Success(it)
+                                }
+                            }
+                        }
+                }
+            }
         }
     }
 
@@ -137,8 +166,9 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
     @RequiresApi(Build.VERSION_CODES.O)
     fun convertUnixToTime(unixTimestamp: Long): String {
         val formatter = DateTimeFormatter.ofPattern("hh:mm a")
-            .withZone(ZoneId.systemDefault())
-        return formatter.format(Instant.ofEpochSecond(unixTimestamp))
+        return Instant.ofEpochSecond(unixTimestamp)
+            .atZone((ZoneId.of("UTC")))
+            .format(formatter)
     }
 
     fun convertUnixToDate(unixTime: Long?): String {
@@ -156,34 +186,33 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getHourlyForecastForToday(forecastList : List<Item?>?): List<Triple<String, String, Int>> {
+    fun getHourlyForecastForToday(forecastList : List<DailyForecast>?): List<Triple<String, String, Int>> {
         return forecastList
             ?.filter { item ->
-                val dataApi = convertUnixToDate(item?.dt?.toLong() ?: 0L)
-                dataApi == getCurrentDate()
+                val date = convertUnixToDate(item.date)
+                date == getCurrentDate()
             }
-            ?.take(7)
             ?.mapNotNull { item ->
-                val time = convertUnixToTime(item?.dt?.toLong() ?: 0L)
-                val temp = convertTemperature(item?.main?.temp ?: 0.0, "kelvin", "celsius").toString()
-                val icon = getWeatherIcon(item?.weather?.firstOrNull()?.icon ?: "")
+                val time = item.dateText
+                val temp = convertTemperature(item.temp, "kelvin", "celsius")
+                val icon = getWeatherIcon(item.icon)
                 Triple(time, temp, icon)
             } ?: emptyList()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getNextDaysForecast(forecastList: List<Item?>?): List<Triple<String, String, Int>> {
+    fun getNextDaysForecast(forecastList: List<DailyForecast>?): List<Triple<String, String, Int>> {
         return forecastList
             ?.groupBy { item ->
-                convertUnixToDate(item?.dt?.toLong() ?: 0L)
+                convertUnixToDate(item.date)
             }
             ?.mapNotNull { (date, items) ->
-                val avgTemp = items.mapNotNull { it?.main?.temp }
+                val avgTemp = items.map { it.temp }
                     .takeIf { it.isNotEmpty() }
                     ?.average()
                     ?.let { convertTemperature(it, "kelvin", "celsius") }
 
-                val icon = items.mapNotNull { it?.weather?.firstOrNull()?.icon }
+                val icon = items.map { it.icon }
                     .groupingBy { it }
                     .eachCount()
                     .maxByOrNull { it.value }?.key
@@ -195,8 +224,7 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
             ?.take(5) ?: emptyList()
     }
 
-    fun getWeatherIcon(iconCode: String): Int {
-        return when (iconCode) {
+    fun getWeatherIcon(iconCode: String): Int { return when (iconCode) {
             "01d" -> R.drawable.clear_sky_icon
             "01n" -> R.drawable.clear_sky_night_icon
             "02d" -> R.drawable.few_clouds_icon
@@ -214,8 +242,7 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
             "50d" -> R.drawable.mist_icon
             "50n" -> R.drawable.mist_night_icon
             else -> ""
-        } as Int
-    }
+        } as Int }
 
     fun getCurrentLocation(activity: Activity){
         locationProvider.getUserLocation(
