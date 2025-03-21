@@ -1,3 +1,27 @@
 <resources>
     <string name="app_name">WeatherSync</string>
+    <string name="appName">WeatherSync</string>
+    <string name="home">Home</string>
+    <string name="favorites">Favorites</string>
+    <string name="notifications">Notifications</string>
+    <string name="settings">Settings</string>
+    <string name="alerts">Alerts</string>
+    <string name="language">Language</string>
+    <string name="temp_unit">Temp Unit</string>
+    <string name="location">Location</string>
+    <string name="wind_speed_unit">Wind Speed Unit</string>
+    <string name="arabic">Arabic</string>
+    <string name="english">English</string>
+    <string name="default_language">Default</string>
+    <string name="celsius_c">Celsius °C</string>
+    <string name="kelvin_k">Kelvin °K</string>
+    <string name="fahrenheit_f">Fahrenheit °F</string>
+    <string name="gps">Gps</string>
+    <string name="map">Map</string>
+    <string name="meter_sec">Meter/Sec</string>
+    <string name="mile_hour">Mile/Hour</string>
+    <string name="today">Today</string>
+    <string name="kelvin">kelvin</string>
+    <string name="celsius">celsius</string>
+    <string name="daily_details">Daily Details</string>
 </resources>
