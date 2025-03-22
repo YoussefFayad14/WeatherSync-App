@@ -18,4 +18,7 @@ sealed class ScreenRoute(val route: String) {
 
     @Serializable
     object NotificationsScreenRoute : ScreenRoute("notifications_screen")
+
+    @Serializable
+    object MapScreenRoute : ScreenRoute("map_screen")
 }

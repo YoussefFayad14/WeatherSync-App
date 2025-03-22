@@ -50,13 +50,16 @@ fun SetupNavHost() {
                 HomeScreen(navController, weatherViewModel)
             }
             composable(ScreenRoute.FavoritesScreenRoute.route) {
-                FavoritesScreen()
+                FavoritesScreen(navController)
             }
             composable(ScreenRoute.NotificationsScreenRoute.route) {
                 NotificationsScreen()
             }
             composable(ScreenRoute.SettingsScreenRoute.route) {
                 SettingsScreen()
+            }
+            composable(ScreenRoute.MapScreenRoute.route) {
+                MapScreen(navController)
             }
         }
     }
