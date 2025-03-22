@@ -24,4 +24,7 @@
     <string name="kelvin">kelvin</string>
     <string name="celsius">celsius</string>
     <string name="daily_details">Daily Details</string>
+    <string name="delete">Delete</string>
+    <string name="weather">Weather</string>
+    <string name="weather_details">Weather Details</string>
 </resources>
