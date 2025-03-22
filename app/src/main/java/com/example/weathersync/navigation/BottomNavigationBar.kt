@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.weathersync.R
@@ -46,7 +45,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem(
             label = stringResource(R.string.alerts),
             icon = Icons.Default.Notifications,
-            route = ScreenRoute.NotificationsScreenRoute.route
+            route = ScreenRoute.AlertsScreenRoute.route
         ),
         BottomNavItem(
             label = stringResource(R.string.settings),

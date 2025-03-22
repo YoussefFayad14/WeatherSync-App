@@ -12,3 +12,7 @@ val Pink40 = Color(0xFF7D5260)
 
 val LightSeaGreen = Color(0xFF20B2AA)
 val DeepNavyBlue = Color(0xFF0D1B2A)
+val DeepNavyBlue1 = Color(0xFF16344E)
+val DarkGreen = Color(0xFF006400)
+val Green1 = Color(0xFF15B515)
+val DarkRed = Color(0xFF820101)

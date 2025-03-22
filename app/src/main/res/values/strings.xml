@@ -27,4 +27,7 @@
     <string name="delete">Delete</string>
     <string name="weather">Weather</string>
     <string name="weather_details">Weather Details</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="set_alarm">Set Alarm</string>
 </resources>
