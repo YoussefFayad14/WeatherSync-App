@@ -3,7 +3,6 @@ package com.example.weathersync.ui.screens
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import com.example.weathersync.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -14,14 +13,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.weathersync.R
 import com.example.weathersync.ui.components.FavoriteItem
+import com.example.weathersync.ui.components.TimePickerBottomSheet
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.DeepNavyBlue1
 import com.example.weathersync.ui.theme.LightSeaGreen
@@ -29,17 +35,18 @@ import com.example.weathersync.ui.theme.LightSeaGreen
 @OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun FavoritesScreen(navController: NavHostController) {
-    var favoriteItems by remember { mutableStateOf(List(20) { "Item$it" }) }
+fun AlertsScreen(navController: NavHostController) {
+    var alerts by remember { mutableStateOf(List(20) { "Alert$it" }) }
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("map_screen") },
+                onClick = { showBottomSheet = true  },
                 containerColor = if (isSystemInDarkTheme()) DeepNavyBlue1 else LightSeaGreen
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_favorite_white),
+                    painter = painterResource(id = R.drawable.ic_add_alarm_white),
                     contentDescription = "Add Alarm Icon",
                     contentScale = ContentScale.Crop
                 )
@@ -53,20 +60,23 @@ fun FavoritesScreen(navController: NavHostController) {
                 .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(favoriteItems, key = { it }) { item ->
+            items(alerts, key = { it }) { alert ->
                 FavoriteItem(
-                    item,
+                    alert,
                     navigateTo = { navController.navigate("map_screen") },
-                    onRemove = { favoriteItems = favoriteItems.filterNot { it == item } },
+                    onRemove = { alerts = alerts.filterNot { it == alert } },
                     modifier = Modifier.animateItemPlacement(tween(200))
                 )
             }
         }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun FavoritesScreenPreview(){
-   // FavoritesScreen(navController = NavHostController(LocalContext.current))
+    if (showBottomSheet) {
+        TimePickerBottomSheet(
+            context = LocalContext.current,
+            onDismiss = { showBottomSheet = false },
+            onTimeSelected = { hour, minute, day ->
+                //scheduleAlarm(context, hour, minute)
+            }
+        )
+    }
 }
