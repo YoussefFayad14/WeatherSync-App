@@ -52,8 +52,8 @@ fun SetupNavHost() {
             composable(ScreenRoute.FavoritesScreenRoute.route) {
                 FavoritesScreen(navController)
             }
-            composable(ScreenRoute.NotificationsScreenRoute.route) {
-                NotificationsScreen()
+            composable(ScreenRoute.AlertsScreenRoute.route) {
+                AlertsScreen(navController)
             }
             composable(ScreenRoute.SettingsScreenRoute.route) {
                 SettingsScreen()
