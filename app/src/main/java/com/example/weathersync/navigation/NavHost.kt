@@ -14,6 +14,8 @@ import androidx.navigation.compose.*
 import com.example.weathersync.ui.screens.*
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.viewmodel.FavoriteViewModel
+import com.example.weathersync.viewmodel.FavoriteViewModelFactory
 import com.example.weathersync.viewmodel.WeatherViewModel
 import com.example.weathersync.viewmodel.WeatherViewModelFactory
 
@@ -22,6 +24,9 @@ fun SetupNavHost() {
     val navController = rememberNavController()
     val weatherViewModel: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(LocalContext.current)
+    )
+    val favoriteViewModel: FavoriteViewModel = viewModel(
+        factory = FavoriteViewModelFactory(LocalContext.current)
     )
 
     Scaffold(
@@ -50,7 +55,7 @@ fun SetupNavHost() {
                 HomeScreen(navController, weatherViewModel)
             }
             composable(ScreenRoute.FavoritesScreenRoute.route) {
-                FavoritesScreen(navController)
+                FavoritesScreen(navController, favoriteViewModel)
             }
             composable(ScreenRoute.AlertsScreenRoute.route) {
                 AlertsScreen(navController)
@@ -59,7 +64,10 @@ fun SetupNavHost() {
                 SettingsScreen()
             }
             composable(ScreenRoute.MapScreenRoute.route) {
-                MapScreen(navController)
+                MapScreen(navController, favoriteViewModel)
+            }
+            composable(ScreenRoute.SearchScreenRoute.route) {
+                SearchScreen(navController)
             }
         }
     }

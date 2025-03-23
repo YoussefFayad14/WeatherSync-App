@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,12 +60,7 @@ fun AlertsScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(alerts, key = { it }) { alert ->
-                FavoriteItem(
-                    alert,
-                    navigateTo = { navController.navigate("map_screen") },
-                    onRemove = { alerts = alerts.filterNot { it == alert } },
-                    modifier = Modifier.animateItemPlacement(tween(200))
-                )
+               TODO("implement alert item")
             }
         }
     }

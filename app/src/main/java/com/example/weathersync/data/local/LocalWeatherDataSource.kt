@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 
-class LocalWeatherDataSource(private val dao: WeatherDao): LocalDataSource {
+class LocalWeatherDataSource(private val dao: WeatherDao): LocalDataSource.ILocalWeatherDataSource {
 
     override suspend fun saveWeather(weather: WeatherEntity) {
         withContext(Dispatchers.IO) {
