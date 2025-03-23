@@ -21,4 +21,7 @@ sealed class ScreenRoute(val route: String) {
 
     @Serializable
     object MapScreenRoute : ScreenRoute("map_screen")
+
+    @Serializable
+    object SearchScreenRoute : ScreenRoute("search_screen")
 }

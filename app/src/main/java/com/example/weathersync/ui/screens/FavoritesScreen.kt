@@ -20,17 +20,27 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.weathersync.data.model.Response
 import com.example.weathersync.ui.components.FavoriteItem
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.DeepNavyBlue1
 import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.viewmodel.FavoriteViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun FavoritesScreen(navController: NavHostController) {
-    var favoriteItems by remember { mutableStateOf(List(20) { "Item$it" }) }
+fun FavoritesScreen(navController: NavHostController, favoriteViewModel: FavoriteViewModel) {
+    val favoriteState by favoriteViewModel.favorites.collectAsStateWithLifecycle()
+    val favoriteItems = (favoriteState as? Response.Success)?.data ?: emptyList()
+    val message by favoriteViewModel.message.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        favoriteViewModel.getFavorites()
+    }
+
 
     Scaffold(
         floatingActionButton = {
@@ -53,11 +63,11 @@ fun FavoritesScreen(navController: NavHostController) {
                 .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(favoriteItems, key = { it }) { item ->
+            items(favoriteItems, key = { "${it.lat},${it.lon}" }) { item ->
                 FavoriteItem(
                     item,
-                    navigateTo = { navController.navigate("map_screen") },
-                    onRemove = { favoriteItems = favoriteItems.filterNot { it == item } },
+                    navigateTo = { TODO("Navigate to weather details screen") },
+                    onRemove = { favoriteViewModel.deleteFavorite(item.lat, item.lon)},
                     modifier = Modifier.animateItemPlacement(tween(200))
                 )
             }

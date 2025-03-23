@@ -30,4 +30,9 @@
     <string name="cancel">Cancel</string>
     <string name="confirm">Confirm</string>
     <string name="set_alarm">Set Alarm</string>
+    <string name="google_maps_key">${MAPS_API_KEY}</string>
+    <string name="save">Save</string>
+    <string name="longitude">Longitude</string>
+    <string name="latitude">Latitude</string>
+    <string name="selected_location">Selected Location</string>
 </resources>

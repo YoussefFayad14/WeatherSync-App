@@ -19,14 +19,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.weathersync.navigation.ScreenRoute
-import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.data.model.local.FavoriteEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun FavoriteItem(
-    item: String,
+    item: FavoriteEntity,
     navigateTo: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
@@ -59,7 +58,7 @@ fun FavoriteItem(
         backgroundContent = {
             val backgroundColor by animateColorAsState(
                 targetValue = when (swipeToDismissBoxState.currentValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> LightSeaGreen
+                    SwipeToDismissBoxValue.StartToEnd -> Color.Green
                     SwipeToDismissBoxValue.EndToStart -> Color.Red
                     else -> Color.Transparent
                 },
@@ -97,9 +96,16 @@ fun FavoriteItem(
             ListItem(
                 headlineContent = {
                     Row {
-                        Text(text = item, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Description", fontSize = 16.sp)
+                        Text(
+                            text = item.address.split(", ").lastOrNull() ?: "Unknown City",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text =  item.address,
+                            fontSize = 16.sp
+                        )
                     }
                 },
                 trailingContent = {
@@ -119,5 +125,5 @@ fun FavoriteItem(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun FavoritesItemScreenPreview(){
-    FavoriteItem(item = "New York", navigateTo = {}, onRemove = {})
+    //FavoriteItem(item = "New York", navigateTo = {}, onRemove = {})
 }
