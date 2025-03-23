@@ -35,4 +35,11 @@
     <string name="longitude">Longitude</string>
     <string name="latitude">Latitude</string>
     <string name="selected_location">Selected Location</string>
+    <string name="search_for_a_location">Search for a location...</string>
+    <string name="clear_search">Clear Search</string>
+    <string name="search_icon">Search Icon</string>
+    <string name="back">Back</string>
+    <string name="location_icon">Location Icon</string>
+    <string name="search">Search</string>
+    <string name="search_location">Search Location</string>
 </resources>

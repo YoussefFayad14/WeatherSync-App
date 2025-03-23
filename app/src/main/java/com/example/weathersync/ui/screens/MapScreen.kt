@@ -15,10 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
+import com.example.weathersync.R
 import com.example.weathersync.ui.components.BottomSheetContent
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
@@ -62,18 +64,19 @@ fun MapScreen(navController: NavController, favoriteViewModel: FavoriteViewModel
                 .border(
                     1.dp,
                     if (isSystemInDarkTheme()) LightSeaGreen else Color.White,
-                    MaterialTheme.shapes.medium)
+                    MaterialTheme.shapes.medium
+                )
                 .padding(12.dp)
                 .clickable { navController.navigate("search_screen") }
         ) {
             Row {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
+                    contentDescription = stringResource(R.string.search),
                     tint = Color.White,
                 )
                 Text(
-                    text = "Search Location",
+                    text = stringResource(R.string.search_location),
                     fontSize = 16.sp,
                     color = Color.White,
                     modifier = Modifier.padding(start = 8.dp),
