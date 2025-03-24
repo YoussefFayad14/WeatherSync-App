@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.example.weathersync.R
+import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.components.BottomSheetContent
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
@@ -33,23 +34,36 @@ import com.google.android.gms.maps.model.MarkerOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(navController: NavController, favoriteViewModel: FavoriteViewModel) {
+fun MapScreen(
+    navController: NavController,
+    favoriteViewModel: FavoriteViewModel,
+    lat: Double?,
+    lon: Double?
+) {
     val context = LocalContext.current
     val activity = remember { context as? Activity }
     val mapView = rememberMapViewWithLifecycle()
     val locationProvider = remember { LocationProvider(context) }
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
+    var marker by remember { mutableStateOf<Marker?>(null) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showBottomSheet by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf<String?>(null) }
+    val initialLocation = lat?.let { LatLng(it, lon ?: 0.0) }
 
     LaunchedEffect(Unit) {
-        activity?.let {
-            locationProvider.getUserLocation(
-                callback = { lat, lon -> userLocation = LatLng(lat, lon) },
-                onError = { Log.e("LocationError", it) },
-                activity = it
-            )
+        if (initialLocation != null) {
+            selectedLocation = initialLocation
+            showBottomSheet = true
+        } else {
+            activity?.let {
+                locationProvider.getUserLocation(
+                    callback = { userLat, userLon -> userLocation = LatLng(userLat, userLon) },
+                    onError = { Log.e("LocationError", it) },
+                    activity = it
+                )
+            }
         }
     }
 
@@ -84,13 +98,15 @@ fun MapScreen(navController: NavController, favoriteViewModel: FavoriteViewModel
                 )
             }
         }
-
+        AnimatedSnackBar(message = snackbarMessage)
         AndroidView(
             factory = { mapView },
             modifier = Modifier.fillMaxSize()
         ) { mapView ->
             mapView.getMapAsync { googleMap ->
-                setupMap(googleMap, userLocation, selectedLocation) { newLocation ->
+                setupMap(googleMap, initialLocation?: userLocation, selectedLocation) { newLocation, newMarker ->
+                    marker?.remove()
+                    marker = newMarker
                     selectedLocation = newLocation
                     showBottomSheet = true
                 }
@@ -108,6 +124,7 @@ fun MapScreen(navController: NavController, favoriteViewModel: FavoriteViewModel
                         Log.d("MapScreen", "Saved Location: ${selectedLocation!!.latitude}, ${selectedLocation!!.longitude}")
                         favoriteViewModel.insertFavorite(selectedLocation?.latitude, selectedLocation?.longitude)
                         showBottomSheet = false
+                        snackbarMessage = "Location Saved Successfully"
                     }
                 )
             }
@@ -119,7 +136,7 @@ private fun setupMap(
     googleMap: GoogleMap,
     userLocation: LatLng?,
     selectedLocation: LatLng?,
-    onLocationSelected: (LatLng) -> Unit
+    onLocationSelected: (LatLng, Marker) -> Unit
 ) {
     googleMap.uiSettings.isZoomControlsEnabled = true
     googleMap.uiSettings.isMyLocationButtonEnabled = true
@@ -129,16 +146,16 @@ private fun setupMap(
 
     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(locationToShow, 12f))
 
-    var marker: Marker? = null
+    googleMap.clear()
 
     selectedLocation?.let {
-        marker = googleMap.addMarker(MarkerOptions().position(it).title("Selected Location"))
+        googleMap.addMarker(MarkerOptions().position(it).title("Selected Location"))
     }
 
     googleMap.setOnMapClickListener { latLng ->
-        marker?.remove()
-        marker = googleMap.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
-        onLocationSelected(latLng)
+        googleMap.clear()
+        val clickedMarker = googleMap.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
+        onLocationSelected(latLng, clickedMarker!!)
     }
 }
 

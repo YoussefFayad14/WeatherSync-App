@@ -16,6 +16,8 @@ import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.viewmodel.FavoriteViewModel
 import com.example.weathersync.viewmodel.FavoriteViewModelFactory
+import com.example.weathersync.viewmodel.SearchViewModel
+import com.example.weathersync.viewmodel.SearchViewModelFactory
 import com.example.weathersync.viewmodel.WeatherViewModel
 import com.example.weathersync.viewmodel.WeatherViewModelFactory
 
@@ -27,6 +29,9 @@ fun SetupNavHost() {
     )
     val favoriteViewModel: FavoriteViewModel = viewModel(
         factory = FavoriteViewModelFactory(LocalContext.current)
+    )
+    val searchViewModel: SearchViewModel = viewModel(
+        factory = SearchViewModelFactory(LocalContext.current)
     )
 
     Scaffold(
@@ -63,11 +68,25 @@ fun SetupNavHost() {
             composable(ScreenRoute.SettingsScreenRoute.route) {
                 SettingsScreen()
             }
-            composable(ScreenRoute.MapScreenRoute.route) {
-                MapScreen(navController, favoriteViewModel)
+
+            composable(
+                route = ScreenRoute.MapScreenRoute.route + "?lat={lat}&lon={lon}",
+                arguments = listOf(
+                    navArgument("lat") { nullable = true; defaultValue = null },
+                    navArgument("lon") { nullable = true; defaultValue = null }
+                )
+            ) { backStackEntry ->
+                val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull()
+                val lon = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull()
+                MapScreen(navController, favoriteViewModel, lat, lon)
             }
+
+            composable(ScreenRoute.MapScreenRoute.route) {
+                MapScreen(navController, favoriteViewModel, null, null)
+            }
+
             composable(ScreenRoute.SearchScreenRoute.route) {
-                SearchScreen(navController)
+                SearchScreen(navController, searchViewModel)
             }
         }
     }

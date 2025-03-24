@@ -20,7 +20,15 @@ sealed class ScreenRoute(val route: String) {
     object AlertsScreenRoute : ScreenRoute("alerts_screen")
 
     @Serializable
-    object MapScreenRoute : ScreenRoute("map_screen")
+    object MapScreenRoute : ScreenRoute("map_screen") {
+        fun createRoute(lat: Double?, lon: Double?): String {
+            return if (lat != null && lon != null) {
+                "map_screen?lat=$lat&lon=$lon"
+            } else {
+                "map_screen"
+            }
+        }
+    }
 
     @Serializable
     object SearchScreenRoute : ScreenRoute("search_screen")
