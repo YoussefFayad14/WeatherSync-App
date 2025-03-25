@@ -16,6 +16,9 @@
     <string name="celsius_c">Celsius °C</string>
     <string name="kelvin_k">Kelvin °K</string>
     <string name="fahrenheit_f">Fahrenheit °F</string>
+    <string name="symbol_celsius">°C</string>
+    <string name="symbol_fahrenheit">°F</string>
+    <string name="symbol_kelvin">K</string>
     <string name="gps">Gps</string>
     <string name="map">Map</string>
     <string name="meter_sec">Meter/Sec</string>
@@ -23,6 +26,7 @@
     <string name="today">Today</string>
     <string name="kelvin">kelvin</string>
     <string name="celsius">celsius</string>
+    <string name="fahrenheit">fahrenheit</string>
     <string name="daily_details">Daily Details</string>
     <string name="delete">Delete</string>
     <string name="weather">Weather</string>
@@ -42,4 +46,25 @@
     <string name="location_icon">Location Icon</string>
     <string name="search">Search</string>
     <string name="search_location">Search Location</string>
+    <string name="hourly_details">Hourly Details</string>
+    <string name="next_days_details">Next Days Details</string>
+    <string name="feels_like">"Feels Like "</string>
+    <string name="sunset">Sunset</string>
+    <string name="sunrise">Sunrise</string>
+    <string name="weather_icon">Weather Icon</string>
+    <string name="pressure_icon">Pressure</string>
+    <string name="pressure">Pressure</string>
+    <string name="temp_max_icon">Temp Max</string>
+    <string name="temp_max">Temp Max</string>
+    <string name="hpa">hPa</string>
+    <string name="wind_speed_icon">Wind Speed</string>
+    <string name="wind_speed">Wind Speed</string>
+    <string name="humidity_icon">Humidity</string>
+    <string name="humidity">Humidity</string>
+    <string name="temp_min_icon">Temp Min</string>
+    <string name="temp_min">Temp Min</string>
+    <string name="clouds_icon">Clouds</string>
+    <string name="clouds">Clouds</string>
+    <string name="m_s">M/S</string>
+    <string name="m_h">M/H</string>
 </resources>

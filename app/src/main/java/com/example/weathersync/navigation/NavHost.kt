@@ -1,5 +1,7 @@
 package com.example.weathersync.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -21,6 +23,7 @@ import com.example.weathersync.viewmodel.SearchViewModelFactory
 import com.example.weathersync.viewmodel.WeatherViewModel
 import com.example.weathersync.viewmodel.WeatherViewModelFactory
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SetupNavHost() {
     val navController = rememberNavController()
@@ -57,7 +60,7 @@ fun SetupNavHost() {
                 SplashScreen(navController)
             }
             composable(ScreenRoute.HomeScreenRoute.route) {
-                HomeScreen(navController, weatherViewModel)
+                HomeScreen(weatherViewModel)
             }
             composable(ScreenRoute.FavoritesScreenRoute.route) {
                 FavoritesScreen(navController, favoriteViewModel)

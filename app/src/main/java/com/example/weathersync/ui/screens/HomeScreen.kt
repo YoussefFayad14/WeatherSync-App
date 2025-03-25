@@ -40,6 +40,7 @@ import com.example.weathersync.ui.components.HourlyForecastItem
 import com.example.weathersync.ui.components.WeatherDetailItem
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.utils.DrawableUtils
 import com.example.weathersync.viewmodel.WeatherViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
@@ -48,7 +49,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewModel) {
+fun HomeScreen(weatherViewModel: WeatherViewModel) {
     val isDarkMode = isSystemInDarkTheme()
     val backgroundColor = if (isDarkMode) DeepNavyBlue else LightSeaGreen
     val currentWeather by weatherViewModel.currentWeather.collectAsStateWithLifecycle()
@@ -98,12 +99,11 @@ fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewMo
                         val currentWeatherResponse = (currentWeather as? Response.Success)?.data
                         val forecastResponse = (forecastData as? Response.Success)?.data
 
-                        LottieBackground()
+                        LottieBackground(currentWeatherResponse?.main ?: "")
                         Column(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             HomeScreenContent(
-                                navController,
                                 weatherViewModel,
                                 currentWeatherResponse,
                                 forecastResponse,
@@ -129,14 +129,8 @@ fun HomeScreen(navController: NavHostController, weatherViewModel: WeatherViewMo
 }
 
 @Composable
-fun LottieBackground() {
-    val weatherState = remember { mutableStateOf("snow") }
-    val lottieRes = when (weatherState.value) {
-        "snow" -> R.raw.snow_animation
-        "rain" -> R.raw.rain_animation
-        else -> R.raw.clear_sky_animation
-    }
-
+fun LottieBackground(state: String) {
+    val lottieRes = DrawableUtils.getWeatherBackgroundDrawable(state)
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(lottieRes))
     val progress by animateLottieCompositionAsState(composition, iterations = Int.MAX_VALUE)
 
@@ -150,7 +144,6 @@ fun LottieBackground() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreenContent(
-    navController: NavHostController,
     viewModel: WeatherViewModel,
     currentWeather: WeatherEntity?,
     forecastData: ForecastEntity?,
@@ -165,18 +158,17 @@ fun HomeScreenContent(
     ) {
         item { DayFeelsLike(
             weatherCondition = currentWeather!!.description,
-            feelsLikeTemp = viewModel.convertTemperature(currentWeather.feelsLike,
-                stringResource(R.string.kelvin), stringResource(R.string.celsius)
-            ),
-            iconCode = viewModel.getWeatherIcon(currentWeather.icon),
+            feelsLikeTemp = viewModel.getConvertedTemperature(currentWeather.feelsLike),
+            type = viewModel.getTemperatureSymbol(),
+            iconCode = DrawableUtils.getWeatherIconDrawable(currentWeather.icon),
             dayLabel = stringResource(R.string.today),
             dateLabel = viewModel.getCurrentDay()
         )
         }
         item { Spacer(modifier = Modifier.height(20.dp)) }
         item { TemperatureDisplay(
-                temperature = viewModel.convertTemperature(currentWeather!!.temp,"kelvin","celsius"),
-                type = "C"
+                temperature = viewModel.getConvertedTemperature(currentWeather!!.temp),
+                type = viewModel.getTemperatureSymbol()
             )
         }
         item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -203,7 +195,11 @@ fun HomeScreenContent(
         item { currentWeather.let {
                 DailyDetails(
                     pressure = it?.pressure?.toString() ?: "N/A",
-                    windSpeed = it?.speed?.toString() ?: "N/A",
+                    windSpeed = viewModel.getConvertedWindSpeed(it?.speed ?: 0.0),
+                    speedUnit = viewModel.getSpeedUnit(),
+                    tempMax = viewModel.getConvertedTemperature(it?.tempMax ?: 0.0),
+                    tempMin = viewModel.getConvertedTemperature(it?.tempMin ?: 0.0),
+                    tempType = viewModel.getTemperatureSymbol(),
                     humidity = it?.humidity?.toString() ?: "N/A",
                     clouds = it?.clouds?.toString() ?: "N/A"
                 )
@@ -215,7 +211,7 @@ fun HomeScreenContent(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Text(
-                    text = "Hourly Details",
+                    text = stringResource(R.string.hourly_details),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -230,7 +226,7 @@ fun HomeScreenContent(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Text(
-                    text = "Next Days Details",
+                    text = stringResource(R.string.next_days_details),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -243,7 +239,7 @@ fun HomeScreenContent(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String, iconCode: Int, dayLabel: String, dateLabel: String) {
+fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String,type: String, iconCode: Int, dayLabel: String, dateLabel: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -271,7 +267,7 @@ fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String, iconCode: Int,
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
-                        text = "Feels Like $feelsLikeTemp°C",
+                        text = stringResource(R.string.feels_like)+feelsLikeTemp+type,
                         fontSize = 14.sp,
                         color = Color.White
                     )
@@ -312,7 +308,7 @@ fun TemperatureDisplay(temperature: String,type: String) {
                 color = Color.White
             )
             Text(
-                text = "°$type",
+                text = type,
                 fontSize = 20.sp,
                 color = Color.White,
                 modifier = Modifier.padding(start = 4.dp)
@@ -334,11 +330,11 @@ fun SunsetSunriseRow(viewModel: WeatherViewModel, sunrise: Int?, sunset: Int?) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(id = R.drawable.sunset_icon),
-                contentDescription = "Sunset",
+                contentDescription = stringResource(R.string.sunset),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(2.dp))
-            Text(text = "Sunset", color = Color.White, fontSize = 12.sp)
+            Text(text = stringResource(R.string.sunset), color = Color.White, fontSize = 12.sp)
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = viewModel.convertUnixToTime(sunset?.toLong() ?: 0),
@@ -351,11 +347,11 @@ fun SunsetSunriseRow(viewModel: WeatherViewModel, sunrise: Int?, sunset: Int?) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(id = R.drawable.sunrise_icon),
-                contentDescription = "Sunrise",
+                contentDescription = stringResource(R.string.sunrise),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(2.dp))
-            Text(text = "Sunrise", color = Color.White, fontSize = 12.sp)
+            Text(text = stringResource(R.string.sunrise), color = Color.White, fontSize = 12.sp)
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = viewModel.convertUnixToTime(sunrise?.toLong() ?: 0),
@@ -385,7 +381,16 @@ fun HourlyDetails(viewModel: WeatherViewModel, forecastData: List<DailyForecast>
 }
 
 @Composable
-fun DailyDetails(pressure: String, windSpeed: String, humidity: String, clouds: String) {
+fun DailyDetails(
+    pressure: String,
+    windSpeed: String,
+    speedUnit: String,
+    tempMax: String,
+    tempMin: String,
+    tempType: String,
+    humidity: String,
+    clouds: String
+) {
     ElevatedCard(
         modifier = Modifier
             .padding(4.dp)
@@ -401,8 +406,21 @@ fun DailyDetails(pressure: String, windSpeed: String, humidity: String, clouds: 
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                WeatherDetailItem(icon = R.drawable.pressure_icon, label = "Pressure", value = "$pressure hPa")
-                WeatherDetailItem(icon = R.drawable.wind_speed_icon, label = "Wind Speed", value = "$windSpeed m/s")
+                WeatherDetailItem(
+                    icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.pressure_icon)),
+                    label = stringResource(R.string.pressure),
+                    value = pressure+ stringResource(R.string.hpa)
+                )
+                WeatherDetailItem(
+                    icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.temp_max_icon)),
+                    label = stringResource(R.string.temp_max),
+                    value = tempMax+tempType
+                )
+                WeatherDetailItem(
+                    icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.wind_speed_icon)),
+                    label = stringResource(R.string.wind_speed),
+                    value = windSpeed+speedUnit
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
@@ -412,8 +430,21 @@ fun DailyDetails(pressure: String, windSpeed: String, humidity: String, clouds: 
                     .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                WeatherDetailItem(icon = R.drawable.humidity_icon, label = "Humidity", value = "$humidity%")
-                WeatherDetailItem(icon = R.drawable.cloudy_icon, label = "Clouds", value = "$clouds%")
+                WeatherDetailItem(
+                    icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.humidity_icon)),
+                    label = stringResource(R.string.humidity),
+                    value = "$humidity%"
+                )
+                WeatherDetailItem(
+                    icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.temp_min_icon)),
+                    label = stringResource(R.string.temp_min),
+                    value = tempMin+tempType
+                )
+                WeatherDetailItem(
+                    icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.clouds_icon)),
+                    label = stringResource(R.string.clouds),
+                    value = "$clouds%"
+                )
             }
         }
     }
@@ -463,14 +494,14 @@ fun NextDaysForecast(viewModel: WeatherViewModel, forecastData: List<DailyForeca
 
                     Image(
                         painter = painterResource(icon),
-                        contentDescription = "Weather Icon",
+                        contentDescription = stringResource(R.string.weather_icon),
                         modifier = Modifier
                             .size(32.dp)
                             .weight(0.5f)
                     )
 
                     Text(
-                        text = "${temp}°C",
+                        text = "${temp}${viewModel.getTemperatureSymbol()}",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
