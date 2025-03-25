@@ -4,14 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
-import android.provider.Settings
 import android.os.Looper
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.*
+import java.util.Locale
 
 class LocationProvider(private val context: Context) {
 
@@ -71,6 +71,19 @@ class LocationProvider(private val context: Context) {
         } catch (e: SecurityException) {
             onError("Location permission required")
         }
+    }
+
+    fun getAddress(context: Context, latitude: Double, longitude: Double): String {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        return geocoder.getFromLocation(latitude, longitude, 1)?.getOrNull(0)
+            ?.getAddressLine(0)
+            ?.let { address ->
+                address
+                    .split(", ")
+                    .takeLast(3)
+                    .let { listOf(it.first(), it[1].split(" ").first(), it.last()) }
+                    .joinToString(", ")
+            } ?: "Unknown Address"
     }
 
 }
