@@ -16,6 +16,8 @@ import androidx.navigation.compose.*
 import com.example.weathersync.ui.screens.*
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.viewmodel.AlertsViewModel
+import com.example.weathersync.viewmodel.AlertsViewModelFactory
 import com.example.weathersync.viewmodel.FavoriteViewModel
 import com.example.weathersync.viewmodel.FavoriteViewModelFactory
 import com.example.weathersync.viewmodel.SearchViewModel
@@ -37,6 +39,9 @@ fun SetupNavHost() {
     )
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(LocalContext.current)
+    )
+    val alertsViewModel: AlertsViewModel = viewModel(
+        factory = AlertsViewModelFactory(LocalContext.current)
     )
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModelFactory(LocalContext.current)
@@ -71,7 +76,7 @@ fun SetupNavHost() {
                 FavoritesScreen(navController, favoriteViewModel)
             }
             composable(ScreenRoute.AlertsScreenRoute.route) {
-                AlertsScreen(navController)
+                AlertsScreen(alertsViewModel)
             }
             composable(ScreenRoute.SettingsScreenRoute.route) {
                 SettingsScreen(settingsViewModel)

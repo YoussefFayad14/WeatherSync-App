@@ -94,6 +94,10 @@ dependencies {
     implementation("com.google.maps.android:places-compose:0.1.3")
     implementation("com.google.android.libraries.places:places:3.4.0")
 
+    // worker-manager
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+
+
 
 
 

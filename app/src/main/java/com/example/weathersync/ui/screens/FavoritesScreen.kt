@@ -66,7 +66,7 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
             items(favoriteItems, key = { "${it.lat},${it.lon}" }) { item ->
                 FavoriteItem(
                     item,
-                    navigateTo = { TODO("Navigate to weather details screen") },
+                    navigateTo = {  },
                     onRemove = { favoriteViewModel.deleteFavorite(item.lat, item.lon)},
                     modifier = Modifier.animateItemPlacement(tween(200))
                 )
