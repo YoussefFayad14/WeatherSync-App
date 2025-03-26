@@ -10,6 +10,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.time.format.TextStyle
 import java.util.*
 
@@ -18,23 +19,14 @@ object WeatherUtils {
     fun getFormattedTemperature(value: Double, context: Context): String {
         val state = SharedPreferencesHelper.getSetting(
             context,
-            "temp_unit",
-            context.getString(R.string.celsius)
+            SharedPreferencesHelper.KEY_TEMP_UNIT,
         )
 
-        val unitMap = mapOf(
-            context.getString(R.string.celsius) to "celsius",
-            context.getString(R.string.fahrenheit) to "fahrenheit",
-            context.getString(R.string.kelvin) to "kelvin"
-        )
-
-        val safeTo = unitMap[state.trim().lowercase()] ?: return "Error: Invalid unit ($state)"
-
-        val temp = when (safeTo) {
+        val temp = when (state.lowercase().split(" ").take(1).joinToString()) {
             "celsius" -> value - 273.15
             "fahrenheit" -> (value - 273.15) * 9 / 5 + 32
             "kelvin" -> value
-            else -> return "Error: Invalid conversion ($state)"
+            else -> return "Error: Invalid unit ($state)"
         }
 
         return String.format("%.2f", temp)
@@ -44,19 +36,13 @@ object WeatherUtils {
     fun getFormattedWindSpeed(value: Double, context: Context): String {
         val state = SharedPreferencesHelper.getSetting(
             context,
-            "wind_unit",
-            context.getString(R.string.meter_sec)
+            SharedPreferencesHelper.KEY_WIND_SPEED_UNIT,
         )
-        val unitMap = mapOf(
-            context.getString(R.string.meter_sec) to "meter_sec",
-            context.getString(R.string.mile_hour) to "mile_hour"
-        )
-        val safeTo = unitMap[state.trim()] ?: return "Error: Invalid unit ($state)"
 
-        val speed = when (safeTo) {
-            "meter_sec" -> value
-            "mile_hour" -> value * 2.23694
-            else -> return "Error: Invalid conversion ($state)"
+        val speed = when (state) {
+            context.getString(R.string.meter_sec) -> value
+            context.getString(R.string.mile_hour) -> value * 2.23694
+            else -> return "Error: Invalid unit ($state)"
         }
         return String.format("%.2f", speed)
     }
@@ -64,11 +50,10 @@ object WeatherUtils {
     fun getTemperatureUnitSymbol(context: Context): String {
         val state = SharedPreferencesHelper.getSetting(
             context,
-            "temp_unit",
-            context.getString(R.string.celsius)
+            SharedPreferencesHelper.KEY_TEMP_UNIT,
         )
 
-        return when (state) {
+        return when (state.lowercase().split(" ").take(1).joinToString()) {
             context.getString(R.string.celsius) -> context.getString(R.string.symbol_celsius)
             context.getString(R.string.fahrenheit) -> context.getString(R.string.symbol_fahrenheit)
             context.getString(R.string.kelvin) -> context.getString(R.string.symbol_kelvin)
@@ -79,8 +64,7 @@ object WeatherUtils {
     fun getSpeedUnit(context: Context): String {
         val state = SharedPreferencesHelper.getSetting(
             context,
-            "wind_unit",
-            context.getString(R.string.meter_sec)
+            SharedPreferencesHelper.KEY_WIND_SPEED_UNIT,
         )
         return when (state) {
             context.getString(R.string.meter_sec) -> context.getString(R.string.m_s)
@@ -91,7 +75,7 @@ object WeatherUtils {
 
 
     fun getFormattedCurrentDay(context: Context): String {
-        val languageCode = SharedPreferencesHelper.getSetting(context, "language", Locale.getDefault().language)
+        val languageCode = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
         val locale = Locale(languageCode)
         val dateFormat = SimpleDateFormat("E, dd MMM", locale)
 
@@ -99,7 +83,7 @@ object WeatherUtils {
     }
 
     fun getFormattedTime(context: Context): String {
-        val languageCode = SharedPreferencesHelper.getSetting(context, "language", Locale.getDefault().language)
+        val languageCode = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
         val locale = Locale(languageCode)
         val timeFormat = SimpleDateFormat("hh:mm a", locale)
 
@@ -108,7 +92,7 @@ object WeatherUtils {
 
 
     fun getFormattedDate(context: Context): String {
-        val languageCode = SharedPreferencesHelper.getSetting(context, "language", Locale.getDefault().language)
+        val languageCode = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
         val locale = Locale(languageCode)
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", locale)
 
@@ -118,7 +102,7 @@ object WeatherUtils {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getFormattedTimeFromTimestamp(context: Context, unixTimestamp: Long): String {
-        val languageCode = SharedPreferencesHelper.getSetting(context, "language", Locale.getDefault().language)
+        val languageCode = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
         val locale = Locale(languageCode)
         val formatter = DateTimeFormatter.ofPattern("hh:mm a", locale)
 
@@ -129,25 +113,40 @@ object WeatherUtils {
 
 
     fun getFormattedDateFromTimestamp(context: Context, unixTime: Long?): String {
-        return if (unixTime != null) {
-            val languageCode = SharedPreferencesHelper.getSetting(context, "language", Locale.getDefault().language)
+        if (unixTime == null) return "Unknown"
+
+        val languageSetting = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
+        val languageCode = when (languageSetting.lowercase(Locale.ROOT)) {
+            "arabic" -> "ar"
+            "english" -> "en"
+            else -> "en"
+        }
+
+        return try {
             val locale = Locale(languageCode)
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", locale)
-            dateFormat.format(Date(unixTime * 1000))
-        } else ""
+            dateFormat.format(Date(unixTime * 1000L))
+        } catch (e: Exception) {
+            "Unknown"
+        }
     }
 
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getFormattedDayFromTimestamp(context: Context, date: String): String {
-        val languageCode = SharedPreferencesHelper.getSetting(context, "language", Locale.getDefault().language)
-        val locale = if (languageCode == "ar") Locale("ar") else Locale(languageCode)
-
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH)
-        val localDate = LocalDate.parse(date, formatter)
-
-        return localDate.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+        val languageSetting = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
+        val languageCode = when (languageSetting.lowercase()) {
+            "arabic" -> "ar"
+            "english" -> "en"
+            else -> "en"
+        }
+        val locale = Locale(languageCode)
+        return try {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", locale)
+            val localDate = LocalDate.parse(date, formatter)
+            localDate.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+        } catch (e: DateTimeParseException) {
+            "Unknown"
+        }
     }
-
-
 }

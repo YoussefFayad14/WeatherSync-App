@@ -73,17 +73,22 @@ class LocationProvider(private val context: Context) {
         }
     }
 
-    fun getAddress(context: Context, latitude: Double, longitude: Double): String {
-        val geocoder = Geocoder(context, Locale.getDefault())
-        return geocoder.getFromLocation(latitude, longitude, 1)?.getOrNull(0)
-            ?.getAddressLine(0)
-            ?.let { address ->
-                address
-                    .split(", ")
-                    .takeLast(3)
-                    .let { listOf(it.first(), it[1].split(" ").first(), it.last()) }
-                    .joinToString(", ")
-            } ?: "Unknown Address"
+    fun getAddress(context: Context, latitude: Double?, longitude: Double?): String {
+        val geocoder = Geocoder(context, Locale.ENGLISH)
+        return if (latitude != null && longitude != null) {
+            geocoder.getFromLocation(latitude, longitude, 1)?.getOrNull(0)
+                ?.getAddressLine(0)
+                ?.let { address ->
+                    val addressParts = address.split(", ").takeLast(3)
+                    when (addressParts.size) {
+                        3 -> "${addressParts[0]}, ${addressParts[1].split(" ")[0]}, ${addressParts[2]}"
+                        2 -> "${addressParts[0]}, ${addressParts[1]}"
+                        1 -> addressParts[0]
+                        else -> "Unknown Address"
+                    }
+                } ?: "Unknown Address"
+        } else {
+            "Unknown Address"
+        }
     }
-
 }

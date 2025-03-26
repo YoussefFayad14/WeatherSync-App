@@ -20,6 +20,8 @@ import com.example.weathersync.viewmodel.FavoriteViewModel
 import com.example.weathersync.viewmodel.FavoriteViewModelFactory
 import com.example.weathersync.viewmodel.SearchViewModel
 import com.example.weathersync.viewmodel.SearchViewModelFactory
+import com.example.weathersync.viewmodel.SettingsViewModel
+import com.example.weathersync.viewmodel.SettingsViewModelFactory
 import com.example.weathersync.viewmodel.WeatherViewModel
 import com.example.weathersync.viewmodel.WeatherViewModelFactory
 
@@ -35,6 +37,9 @@ fun SetupNavHost() {
     )
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(LocalContext.current)
+    )
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModelFactory(LocalContext.current)
     )
 
     Scaffold(
@@ -69,7 +74,7 @@ fun SetupNavHost() {
                 AlertsScreen(navController)
             }
             composable(ScreenRoute.SettingsScreenRoute.route) {
-                SettingsScreen()
+                SettingsScreen(settingsViewModel)
             }
 
             composable(

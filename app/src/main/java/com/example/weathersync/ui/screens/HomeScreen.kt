@@ -375,7 +375,8 @@ fun HourlyDetails(viewModel: WeatherViewModel, forecastData: List<DailyForecast>
     ) {
         items(hourlyForecast.size) { index ->
             val (time, temp, icon) = hourlyForecast[index]
-            HourlyForecastItem(time, temp, icon)
+            val unitSymbol = viewModel.getTemperatureSymbol()
+            HourlyForecastItem(time, temp, unitSymbol, icon)
         }
     }
 }
