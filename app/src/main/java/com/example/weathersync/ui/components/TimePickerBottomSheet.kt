@@ -29,7 +29,7 @@ import java.util.*
 fun TimePickerBottomSheet(
     context: Context,
     onDismiss: () -> Unit,
-    onTimeSelected: (Int, Int, String) -> Unit
+    onTimeSelected: (Int, Int, Int) -> Unit
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -37,7 +37,7 @@ fun TimePickerBottomSheet(
     ) {
         var selectedHour by remember { mutableStateOf(0) }
         var selectedMinute by remember { mutableStateOf(0) }
-        var selectedDay by remember { mutableStateOf("Monday") }
+        var selectedDay by remember { mutableStateOf(0) }
 
         Column(
             modifier = Modifier.padding(16.dp)
@@ -50,7 +50,7 @@ fun TimePickerBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Day Picker TextField
+            // Day Picker
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -59,22 +59,21 @@ fun TimePickerBottomSheet(
                         RoundedCornerShape(16.dp)
                     )
                     .padding(16.dp)
-                    .clickable{
+                    .clickable {
                         val calendar = Calendar.getInstance()
                         DatePickerDialog(
                             context,
-                            { _, year, month, dayOfMonth ->
-                                selectedDay = "$dayOfMonth/${month + 1}/$year"
+                            { _, _, _, dayOfMonth ->
+                                selectedDay = dayOfMonth
                             },
                             calendar.get(Calendar.YEAR),
                             calendar.get(Calendar.MONTH),
                             calendar.get(Calendar.DAY_OF_MONTH)
                         ).show()
                     }
-
             ) {
                 Text(
-                    text ="Selected Day: $selectedDay",
+                    text = "Selected Day: $selectedDay",
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isSystemInDarkTheme()) DeepNavyBlue else Color.White
                 )
@@ -106,7 +105,7 @@ fun TimePickerBottomSheet(
                     }
             ) {
                 Text(
-                    text ="Selected Time: $selectedHour:$selectedMinute",
+                    text = "Selected Time: %02d:%02d".format(selectedHour, selectedMinute),
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isSystemInDarkTheme()) DeepNavyBlue else Color.White
                 )
