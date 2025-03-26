@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.example.weathersync.R
 
 @Composable
-fun HourlyForecastItem(time: String, temp: String, iconCode: Int){
+fun HourlyForecastItem(time: String, temp: String,unitSymbol: String, iconCode: Int){
     ElevatedCard(
         modifier = Modifier
             .padding(8.dp)
@@ -44,7 +44,10 @@ fun HourlyForecastItem(time: String, temp: String, iconCode: Int){
                 contentDescription = "Snow"
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "$temp°C", color = Color.White)
+            Text(
+                text = temp+unitSymbol,
+                color = Color.White
+            )
         }
     }
 }

@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weathersync.data.model.Response
 import com.example.weathersync.data.model.remote.PlaceData
-import com.google.android.gms.maps.model.LatLng
+import com.example.weathersync.utils.PLACES_API_KEY
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.*
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
@@ -18,7 +18,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class SearchViewModel(context: Context) : ViewModel() {
-
+    init {
+        if (!Places.isInitialized()) {
+            Places.initialize(context.applicationContext, PLACES_API_KEY)
+        }
+    }
     private val placesClient: PlacesClient = Places.createClient(context)
     private val sessionToken = AutocompleteSessionToken.newInstance()
 

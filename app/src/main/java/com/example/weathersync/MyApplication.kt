@@ -1,15 +1,11 @@
 package com.example.weathersync
 
 import android.app.Application
-import com.example.weathersync.utils.PLACES_API_KEY
-import com.google.android.libraries.places.api.Places
+import android.content.Context
+import com.example.weathersync.utils.LocaleHelper
 
 class MyApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-
-        if (!Places.isInitialized()) {
-            Places.initialize(applicationContext, PLACES_API_KEY)
-        }
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(base))
     }
 }
