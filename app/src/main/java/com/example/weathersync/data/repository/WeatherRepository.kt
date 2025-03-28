@@ -13,6 +13,7 @@ interface WeatherRepository {
     suspend fun saveWeather(weather: WeatherEntity)
     suspend fun saveForecast(forecastList: ForecastEntity)
     suspend fun getLastLocation(): Triple<Double, Double, Long>
+    suspend fun getWeatherList(): Response<List<WeatherEntity>>
     fun getCachedWeather(): Flow<Response<List<WeatherEntity>>>
     fun getCachedForecast(): Flow<Response<List<ForecastEntity>>>
     suspend fun clearWeather()

@@ -24,4 +24,20 @@ object AlertsUtils {
         }
         return calendar.timeInMillis
     }
+
+    fun calculateInitialDelay(): Long {
+        val now = System.currentTimeMillis()
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            if (now >= timeInMillis) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+        return calendar.timeInMillis - now
+    }
 }

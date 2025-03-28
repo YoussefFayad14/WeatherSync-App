@@ -20,6 +20,9 @@ interface WeatherDao {
     @Query("SELECT * FROM weather_table")
     fun getWeather(): Flow<List<WeatherEntity>>
 
+    @Query("SELECT * FROM weather_table")
+    suspend fun getWeatherList(): List<WeatherEntity>
+
     @Query("SELECT * FROM forecast_table")
     fun getForecast(): Flow<List<ForecastEntity>>
 

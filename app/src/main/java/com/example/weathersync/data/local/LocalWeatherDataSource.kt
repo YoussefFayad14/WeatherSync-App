@@ -5,7 +5,10 @@ import com.example.weathersync.data.model.local.ForecastEntity
 import com.example.weathersync.data.model.local.WeatherEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class LocalWeatherDataSource(private val dao: WeatherDao): LocalDataSource.ILocalWeatherDataSource {
@@ -23,8 +26,18 @@ class LocalWeatherDataSource(private val dao: WeatherDao): LocalDataSource.ILoca
             dao.getWeather().collect {
                 emit(Response.Success(it))
             }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             emit(Response.Failure(e))
+        }
+    }
+
+    override suspend fun getWeatherList(): Response<List<WeatherEntity>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                Response.Success(dao.getWeatherList())
+            } catch (e: Exception) {
+                Response.Failure(e)
+            }
         }
     }
 

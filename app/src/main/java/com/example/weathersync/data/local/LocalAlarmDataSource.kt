@@ -26,27 +26,9 @@ class LocalAlarmDataSource(private val alarmDao: AlarmDao) : LocalDataSource.ILo
         }
     }
 
-    override suspend fun getNextAlarm(currentTime: Long): AlarmEntity? {
-        return withContext(Dispatchers.IO) {
-            alarmDao.getNextAlarm(currentTime)
-        }
-    }
-
     override suspend fun getAlarmById(alarmId: Int): AlarmEntity? {
         return withContext(Dispatchers.IO) {
             alarmDao.getAlarmById(alarmId)
-        }
-    }
-
-    override suspend fun disableAlarm(alarmId: Int) {
-        return withContext(Dispatchers.IO) {
-            alarmDao.disableAlarm(alarmId)
-        }
-    }
-
-    override suspend fun enableAlarm(alarmId: Int) {
-        return withContext(Dispatchers.IO) {
-            alarmDao.enableAlarm(alarmId)
         }
     }
 

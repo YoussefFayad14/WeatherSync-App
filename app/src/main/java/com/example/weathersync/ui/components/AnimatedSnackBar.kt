@@ -1,27 +1,19 @@
 package com.example.weathersync.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDefaults
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.weathersync.ui.theme.DarkGreen
 import kotlinx.coroutines.delay
 
 @Composable
-fun AnimatedSnackBar(message: String?) {
+fun AnimatedSnackBar(message: String?, type: String = "Error") {
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     var isVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(message) {
@@ -33,23 +25,32 @@ fun AnimatedSnackBar(message: String?) {
         }
     }
 
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { -10 }),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = { -10 })
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 8.dp),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.fillMaxWidth()
-        ) { snackbarData ->
-            Snackbar(
-                snackbarData = snackbarData,
-                containerColor = Color.Red,
-                contentColor = Color.White,
-                actionColor = Color.Yellow,
-                shape = SnackbarDefaults.shape,
-                modifier = Modifier.fillMaxWidth().padding(0.dp)
-            )
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+        ) {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.fillMaxWidth()
+            ) { snackbarData ->
+                Snackbar(
+                    snackbarData = snackbarData,
+                    containerColor = if (type == "Error") Color.Red else DarkGreen,
+                    contentColor = Color.White,
+                    actionColor = Color.Yellow,
+                    shape = SnackbarDefaults.shape,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
+                )
+            }
         }
     }
 }

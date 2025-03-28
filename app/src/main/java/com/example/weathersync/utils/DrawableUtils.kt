@@ -27,6 +27,7 @@ object DrawableUtils {
             "Clouds" -> R.drawable.cloudy_icon
             "Temp Max" -> R.drawable.temp_max_icon
             "Temp Min" -> R.drawable.temp_min_icon
+            "Clock" -> R.drawable.ic_add_alarm_white
             else -> R.drawable.ic_launcher_foreground
         }
     }
@@ -36,6 +37,13 @@ object DrawableUtils {
             "snow" -> R.raw.snow_animation
             "rain" -> R.raw.rain_animation
             else -> R.raw.clear_sky_animation
+        }
+    }
+
+    fun getAnimationDrawable(state: String): Int {
+        return when (state) {
+            "no_alarm_set" -> R.raw.person_sleep_animation
+            else -> 0
         }
     }
 }

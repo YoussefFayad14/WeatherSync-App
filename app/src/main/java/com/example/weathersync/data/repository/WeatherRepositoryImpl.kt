@@ -33,6 +33,9 @@ class WeatherRepositoryImpl(
     override suspend fun getLastLocation(): Triple<Double, Double, Long> {
         return localWeatherDataSource.getLastLocation()
     }
+    override suspend fun getWeatherList(): Response<List<WeatherEntity>> {
+        return localWeatherDataSource.getWeatherList()
+    }
 
     override fun getCachedWeather(): Flow<Response<List<WeatherEntity>>> {
         return localWeatherDataSource.getCachedWeather()
