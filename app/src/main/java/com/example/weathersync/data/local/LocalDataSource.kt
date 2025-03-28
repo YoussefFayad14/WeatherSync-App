@@ -14,6 +14,7 @@ interface LocalDataSource {
         suspend fun getLastLocation(): Triple<Double, Double, Long>
         suspend fun clearWeather()
         suspend fun clearForecast()
+        suspend fun getWeatherList(): Response<List<WeatherEntity>>
         fun getCachedWeather(): Flow<Response<List<WeatherEntity>>>
         fun getCachedForecast(): Flow<Response<List<ForecastEntity>>>
     }
@@ -28,10 +29,7 @@ interface LocalDataSource {
         suspend fun insertAlarm(alarm: AlarmEntity)
         suspend fun deleteAlarm(alarmId: Int)
         suspend fun deletePastAlarms(currentTime: Long)
-        suspend fun getNextAlarm(currentTime: Long): AlarmEntity?
         suspend fun getAlarmById(alarmId: Int): AlarmEntity?
-        suspend fun disableAlarm(alarmId: Int)
-        suspend fun enableAlarm(alarmId: Int)
         fun getAllAlarms(): Flow<Response<List<AlarmEntity>>>
     }
 }

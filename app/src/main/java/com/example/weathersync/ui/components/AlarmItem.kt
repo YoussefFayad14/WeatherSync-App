@@ -28,8 +28,6 @@ import kotlinx.coroutines.launch
 fun AlarmItem(
     day: String,
     time: String,
-    isEnabled: Boolean,
-    onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -120,18 +118,11 @@ fun AlarmItem(
                     }
                 },
                 trailingContent = {
-                    Switch(
-                        checked = isEnabled,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Green1,
-                            uncheckedThumbColor = Color.White,
-                            uncheckedTrackColor = DarkRed
-                        ),
-                        onCheckedChange = {
-                            onToggle(it)
-                        },
-                    )
+                   Image(
+                       painter = painterResource(id = R.drawable.ic_notifications),
+                       contentDescription = null,
+                       contentScale = ContentScale.Crop,
+                   )
                 }
             )
             HorizontalDivider()

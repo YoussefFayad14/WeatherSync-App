@@ -43,7 +43,7 @@ fun BottomNavigationBar(navController: NavHostController) {
             route = ScreenRoute.FavoritesScreenRoute.route
         ),
         BottomNavItem(
-            label = stringResource(R.string.alerts),
+            label = stringResource(R.string.alarms),
             icon = Icons.Default.Notifications,
             route = ScreenRoute.AlertsScreenRoute.route
         ),

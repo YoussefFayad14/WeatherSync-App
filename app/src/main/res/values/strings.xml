@@ -5,7 +5,7 @@
     <string name="favorites">Favorites</string>
     <string name="notifications">Notifications</string>
     <string name="settings">Settings</string>
-    <string name="alerts">Alerts</string>
+    <string name="alarms">Alarms</string>
     <string name="language">Language</string>
     <string name="temp_unit">Temp Unit</string>
     <string name="location">Location</string>
@@ -66,5 +66,8 @@
     <string name="temp_min_icon">Temp Min</string>
     <string name="humidity_icon">Humidity</string>
     <string name="clouds_icon">Clouds</string>
+    <string name="alarm_scheduled">Alarm scheduled</string>
+    <string name="cannot_set_an_alarm_in_the_past">Cannot set an alarm in the past</string>
+    <string name="no_alarms_set">No alarms set</string>
 
 </resources>

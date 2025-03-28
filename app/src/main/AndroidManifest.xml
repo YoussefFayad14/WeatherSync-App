@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
 
     <application
@@ -39,7 +41,21 @@
             android:name="com.google.android.libraries.places.api.key"
             android:value="${PLACES_API_KEY}" />
 
+        <receiver
+            android:name=".receiver.AlarmReceiver"
+            android:exported="false"
+            tools:ignore="WrongManifestParent">
+            <intent-filter>
+                <action android:name="com.example.weathersync.ALARM_TRIGGER"/>
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".service.AlarmService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false"
+            android:permission="android.permission.FOREGROUND_SERVICE"
+            tools:ignore="ForegroundServicePermission" />
 
     </application>
-
 </manifest>

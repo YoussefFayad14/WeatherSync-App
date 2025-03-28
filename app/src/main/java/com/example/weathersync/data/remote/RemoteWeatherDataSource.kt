@@ -15,8 +15,8 @@ class RemoteWeatherDataSource(private val service: WeatherApiService) : RemoteDa
         }.catch { e ->
             emit(Response.Failure(e))
     }
-    override fun getWeatherForecast(lat: Double, lon: Double): Flow<Response<ForecastResponse>> = flow {
 
+    override fun getWeatherForecast(lat: Double, lon: Double): Flow<Response<ForecastResponse>> = flow {
             emit(Response.Loading)
             val weather = service.getForecast(lat, lon)
             emit(Response.Success(weather))

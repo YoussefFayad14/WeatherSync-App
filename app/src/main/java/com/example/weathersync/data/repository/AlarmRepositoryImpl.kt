@@ -21,10 +21,6 @@ class AlarmRepositoryImpl(
         return localAlarmDataSource.deletePastAlarms(currentTime)
     }
 
-    override suspend fun getNextAlarm(currentTime: Long): AlarmEntity? {
-        return localAlarmDataSource.getNextAlarm(currentTime)
-    }
-
     override suspend fun getAlarmById(alarmId: Int): AlarmEntity? {
         return localAlarmDataSource.getAlarmById(alarmId)
     }
@@ -32,10 +28,5 @@ class AlarmRepositoryImpl(
     override fun getAllAlarms(): Flow<Response<List<AlarmEntity>>> {
         return localAlarmDataSource.getAllAlarms()
     }
-    override suspend fun disableAlarm(alarmId: Int) {
-        return localAlarmDataSource.disableAlarm(alarmId)
-    }
-    override suspend fun enableAlarm(alarmId: Int) {
-        return localAlarmDataSource.enableAlarm(alarmId)
-    }
+
 }
