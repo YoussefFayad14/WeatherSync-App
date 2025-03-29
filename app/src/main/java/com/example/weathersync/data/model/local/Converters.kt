@@ -17,4 +17,14 @@ class Converters {
         val type = object : TypeToken<List<DailyForecast>>() {}.type
         return gson.fromJson(value, type)
     }
+
+    @TypeConverter
+    fun fromWeatherEntity(value: WeatherEntity?): String {
+        return gson.toJson(value)
+    }
+
+    @TypeConverter
+    fun toWeatherEntity(value: String): WeatherEntity? {
+        return gson.fromJson(value, WeatherEntity::class.java)
+    }
 }
