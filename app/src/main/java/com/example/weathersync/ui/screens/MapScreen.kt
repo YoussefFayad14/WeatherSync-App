@@ -98,7 +98,6 @@ fun MapScreen(
                 )
             }
         }
-        AnimatedSnackBar(message = snackbarMessage)
         AndroidView(
             factory = { mapView },
             modifier = Modifier.fillMaxSize()
@@ -112,6 +111,7 @@ fun MapScreen(
                 }
             }
         }
+        AnimatedSnackBar(message = snackbarMessage)
         if (showBottomSheet && selectedLocation != null) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },

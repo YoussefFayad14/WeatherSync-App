@@ -12,7 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import com.example.weathersync.data.model.local.WeatherEntity
 import com.example.weathersync.ui.screens.*
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
@@ -26,6 +28,7 @@ import com.example.weathersync.viewmodel.SettingsViewModel
 import com.example.weathersync.viewmodel.SettingsViewModelFactory
 import com.example.weathersync.viewmodel.WeatherViewModel
 import com.example.weathersync.viewmodel.WeatherViewModelFactory
+import com.google.gson.Gson
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -101,6 +104,19 @@ fun SetupNavHost() {
             composable(ScreenRoute.SearchScreenRoute.route) {
                 SearchScreen(navController, searchViewModel)
             }
+
+            composable(
+                route = ScreenRoute.WeatherDetailsScreenRoute.route + "?weatherEntity={weatherEntity}",
+                arguments = listOf(navArgument("weatherEntity") { type = NavType.StringType; nullable = true })
+            ) { backStackEntry ->
+                val jsonWeatherEntity = backStackEntry.arguments?.getString("weatherEntity")
+                val weatherEntity = jsonWeatherEntity?.let {
+                    Gson().fromJson(it, WeatherEntity::class.java)
+                }
+
+                WeatherDetailsScreen(navController, weatherEntity)
+            }
+
         }
     }
 }

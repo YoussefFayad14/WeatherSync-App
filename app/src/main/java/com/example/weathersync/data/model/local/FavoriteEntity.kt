@@ -11,4 +11,5 @@ data class FavoriteEntity(
     val lat: Double,
     val lon: Double,
     val address: String,
+    val weatherEntity: WeatherEntity?
 )
