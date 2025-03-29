@@ -11,9 +11,11 @@ interface LocalDataSource {
     interface ILocalWeatherDataSource {
         suspend fun saveWeather(weather: WeatherEntity)
         suspend fun saveForecast(forecastList: ForecastEntity)
-        suspend fun getLastLocation(): Triple<Double, Double, Long>
+        suspend fun getLastLocation(): Pair<Double, Double>?
         suspend fun clearWeather()
         suspend fun clearForecast()
+        suspend fun getLastUpdatedWeather(): Long?
+        suspend fun getLastUpdatedForecast(): Long?
         suspend fun getWeatherList(): Response<List<WeatherEntity>>
         fun getCachedWeather(): Flow<Response<List<WeatherEntity>>>
         fun getCachedForecast(): Flow<Response<List<ForecastEntity>>>
@@ -25,6 +27,7 @@ interface LocalDataSource {
         suspend fun getFavorite(lat: Double, lon: Double): FavoriteEntity?
         fun getAllFavorites(): Flow<Response<List<FavoriteEntity>>>
     }
+
     interface ILocalAlarmDataSource {
         suspend fun insertAlarm(alarm: AlarmEntity)
         suspend fun deleteAlarm(alarmId: Int)

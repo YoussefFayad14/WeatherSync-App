@@ -11,5 +11,6 @@ data class ForecastEntity(
     val coordLon: Double,
     val sunrise: Long,
     val sunset: Long,
-    val dailyForecasts: List<DailyForecast>
+    val dailyForecasts: List<DailyForecast>,
+    val timestamp: Long = System.currentTimeMillis()
 )
