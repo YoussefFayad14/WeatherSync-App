@@ -13,24 +13,27 @@ import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.weathersync.navigation.ScreenRoute
-import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.data.model.local.FavoriteEntity
+import com.example.weathersync.utils.WeatherUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun FavoriteItem(
-    item: String,
+    item: FavoriteEntity,
     navigateTo: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
         confirmValueChange = { state ->
@@ -59,7 +62,7 @@ fun FavoriteItem(
         backgroundContent = {
             val backgroundColor by animateColorAsState(
                 targetValue = when (swipeToDismissBoxState.currentValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> LightSeaGreen
+                    SwipeToDismissBoxValue.StartToEnd -> Color.Green
                     SwipeToDismissBoxValue.EndToStart -> Color.Red
                     else -> Color.Transparent
                 },
@@ -96,10 +99,49 @@ fun FavoriteItem(
         ) {
             ListItem(
                 headlineContent = {
-                    Row {
-                        Text(text = item, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Description", fontSize = 16.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = item.address.split(", ").lastOrNull() ?: "Unknown City",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = item.address,
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(2f)
+                        )
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.TopEnd
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Text(
+                                    text = WeatherUtils.getFormattedTemperature(item.weatherEntity!!.temp, context),
+                                    fontSize = 16.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Box(
+                                    modifier = Modifier.offset(y = (-4).dp)
+                                ) {
+                                    Text(
+                                        text = WeatherUtils.getTemperatureUnitSymbol(context),
+                                        fontSize = 12.sp,
+                                        color = Color.White,
+                                        modifier = Modifier.padding(start = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+
                     }
                 },
                 trailingContent = {
@@ -119,5 +161,5 @@ fun FavoriteItem(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun FavoritesItemScreenPreview(){
-    FavoriteItem(item = "New York", navigateTo = {}, onRemove = {})
+    //FavoriteItem(item = "New York", navigateTo = {}, onRemove = {})
 }

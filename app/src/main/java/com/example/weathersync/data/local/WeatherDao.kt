@@ -14,11 +14,14 @@ interface WeatherDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertForecast(forecastList: ForecastEntity)
 
-    @Query("SELECT coordLat, coordLon, timestamp FROM weather_table LIMIT 1")
+    @Query("SELECT coordLat, coordLon FROM weather_table LIMIT 1")
     suspend fun getLastLocation(): LocationData?
 
     @Query("SELECT * FROM weather_table")
     fun getWeather(): Flow<List<WeatherEntity>>
+
+    @Query("SELECT * FROM weather_table")
+    suspend fun getWeatherList(): List<WeatherEntity>
 
     @Query("SELECT * FROM forecast_table")
     fun getForecast(): Flow<List<ForecastEntity>>
@@ -28,4 +31,10 @@ interface WeatherDao {
 
     @Query("DELETE FROM forecast_table")
     suspend fun clearForecast()
+
+    @Query("SELECT timestamp FROM weather_table")
+    suspend fun lastUpdatedWeather(): Long?
+
+    @Query("SELECT timestamp FROM forecast_table")
+    suspend fun lastUpdatedForecast(): Long?
 }

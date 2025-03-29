@@ -6,47 +6,61 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.weathersync.R
-import com.example.weathersync.ui.components.FavoriteItem
+import com.example.weathersync.data.model.Response
+import com.example.weathersync.ui.components.AlarmItem
+import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.components.TimePickerBottomSheet
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.DeepNavyBlue1
 import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.utils.AlertsUtils
+import com.example.weathersync.utils.DrawableUtils
+import com.example.weathersync.viewmodel.AlertsViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ScheduleExactAlarm")
 @Composable
-fun AlertsScreen(navController: NavHostController) {
-    var alerts by remember { mutableStateOf(List(20) { "Alert$it" }) }
+fun AlertsScreen(alertViewModel: AlertsViewModel) {
+    val context = LocalContext.current
+    val isDarkMode = isSystemInDarkTheme()
+    val alarms by alertViewModel.alarms.collectAsStateWithLifecycle()
     var showBottomSheet by remember { mutableStateOf(false) }
+    var isAlarmScheduled by remember { mutableStateOf(false) }
+    var showPastAlarmError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        alertViewModel.getAllAlarms()
+    }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showBottomSheet = true  },
-                containerColor = if (isSystemInDarkTheme()) DeepNavyBlue1 else LightSeaGreen
+                onClick = { showBottomSheet = true },
+                containerColor = if (isDarkMode) DeepNavyBlue1 else LightSeaGreen
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_add_alarm_white),
+                    painter = painterResource(id = DrawableUtils.getWeatherIconDrawable("Clock")),
                     contentDescription = "Add Alarm Icon",
                     contentScale = ContentScale.Crop
                 )
@@ -56,26 +70,112 @@ fun AlertsScreen(navController: NavHostController) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(if (isSystemInDarkTheme()) DeepNavyBlue else LightSeaGreen)
+                .background(if (isDarkMode) DeepNavyBlue else LightSeaGreen)
                 .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(alerts, key = { it }) { alert ->
-                FavoriteItem(
-                    alert,
-                    navigateTo = { navController.navigate("map_screen") },
-                    onRemove = { alerts = alerts.filterNot { it == alert } },
-                    modifier = Modifier.animateItemPlacement(tween(200))
-                )
+            when (alarms) {
+                is Response.Loading -> {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = if (isDarkMode) LightSeaGreen else DeepNavyBlue)
+                        }
+                    }
+                }
+
+                is Response.Success -> {
+                    val alarmList = (alarms as Response.Success).data
+                    if (alarmList.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillParentMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    val composition by rememberLottieComposition(
+                                        LottieCompositionSpec.RawRes(DrawableUtils.getAnimationDrawable("no_alarm_set"))
+                                    )
+                                    val progress by animateLottieCompositionAsState(composition)
+
+                                    LottieAnimation(
+                                        composition = composition,
+                                        progress = { progress },
+                                        modifier = Modifier.size(200.dp)
+                                    )
+
+                                    Text(
+                                        text = stringResource(R.string.no_alarms_set),
+                                        fontSize = 24.sp,
+                                        color = if (isDarkMode) Color.White else Color.Black,
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        items(alarmList, key = { it.id }) { alarm ->
+                            val alarmData =
+                                AlertsUtils.convertTimeMillisToDayHourMinute(alarm.timeMillis)
+                            AlarmItem(
+                                day = alarmData.first.toString(),
+                                time = "${alarmData.second}:${alarmData.third}",
+                                onDelete = {
+                                    alertViewModel.deleteAlarm(alarm.id)
+                                    alertViewModel.deleteScheduledAlarm(context, alarm.timeMillis)
+                                },
+                                modifier = Modifier.animateItemPlacement(tween(200))
+                            )
+                        }
+                    }
+                }
+
+                is Response.Failure -> {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val errorMessage =
+                                (alarms as Response.Failure).error.message ?: "Unknown error"
+                            Text(text = "Error: $errorMessage", color = Color.Red)
+                        }
+                    }
+                }
+            }
+        }
+        if (isAlarmScheduled) {
+            AnimatedSnackBar(stringResource(R.string.alarm_scheduled),"Success")
+            LaunchedEffect(Unit) {
+                delay(5000)
+                isAlarmScheduled = false
+            }
+        }
+        if (showPastAlarmError) {
+            AnimatedSnackBar(stringResource(R.string.cannot_set_an_alarm_in_the_past), "Error")
+            LaunchedEffect(showPastAlarmError) {
+                delay(5000)
+                showPastAlarmError = false
             }
         }
     }
+
     if (showBottomSheet) {
         TimePickerBottomSheet(
-            context = LocalContext.current,
+            context = context,
             onDismiss = { showBottomSheet = false },
             onTimeSelected = { hour, minute, day ->
-                //scheduleAlarm(context, hour, minute)
+                showBottomSheet = false
+                val alarmData = AlertsUtils.convertDayHourMinuteToTimeMillis(day, hour, minute)
+                if(!alertViewModel.isPastAlarm(alarmData)) {
+                    alertViewModel.insertAlarm(alarmData)
+                    isAlarmScheduled = alertViewModel.scheduleAlarm(context, alarmData)
+                }else{
+                    showPastAlarmError = true
+                }
             }
         )
     }

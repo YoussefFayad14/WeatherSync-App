@@ -6,8 +6,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "2.1.10"
     id("com.google.devtools.ksp")
-
-
 }
 
 android {
@@ -25,7 +23,11 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String", "apiKey", properties.getProperty("apiKey"))
+        buildConfigField("String", "WEATHER_API_KEY", properties.getProperty("WEATHER_API_KEY"))
+        buildConfigField("String", "PLACES_API_KEY", properties.getProperty("PLACES_API_KEY"))
+
+        manifestPlaceholders["MAPS_API_KEY"] = properties.getProperty("MAPS_API_KEY") ?: ""
+        manifestPlaceholders["PLACES_API_KEY"] = properties.getProperty("PLACES_API_KEY") ?: ""
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -85,6 +87,16 @@ dependencies {
 
     //pull refresh
     implementation("com.google.accompanist:accompanist-swiperefresh:0.28.0")
+
+    //google maps
+    implementation("com.google.maps.android:maps-compose:4.3.0")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.maps.android:places-compose:0.1.3")
+    implementation("com.google.android.libraries.places:places:3.4.0")
+
+    // worker-manager
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+
 
 
 
