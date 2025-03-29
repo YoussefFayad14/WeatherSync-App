@@ -69,5 +69,6 @@
     <string name="alarm_scheduled">Alarm scheduled</string>
     <string name="cannot_set_an_alarm_in_the_past">Cannot set an alarm in the past</string>
     <string name="no_alarms_set">No alarms set</string>
+    <string name="no_internet_connection">No Internet Connection</string>
 
 </resources>

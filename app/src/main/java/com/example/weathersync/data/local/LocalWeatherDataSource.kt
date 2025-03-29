@@ -1,5 +1,6 @@
 package com.example.weathersync.data.local
 
+import androidx.compose.ui.window.Popup
 import com.example.weathersync.data.model.Response
 import com.example.weathersync.data.model.local.ForecastEntity
 import com.example.weathersync.data.model.local.WeatherEntity
@@ -15,7 +16,6 @@ class LocalWeatherDataSource(private val dao: WeatherDao): LocalDataSource.ILoca
 
     override suspend fun saveWeather(weather: WeatherEntity) {
         withContext(Dispatchers.IO) {
-            dao.clearWeather()
             dao.insertWeather(weather)
         }
     }
@@ -43,7 +43,6 @@ class LocalWeatherDataSource(private val dao: WeatherDao): LocalDataSource.ILoca
 
     override suspend fun saveForecast(forecastList: ForecastEntity) {
         withContext(Dispatchers.IO) {
-            dao.clearForecast()
             dao.insertForecast(forecastList)
         }
     }
@@ -59,21 +58,35 @@ class LocalWeatherDataSource(private val dao: WeatherDao): LocalDataSource.ILoca
         }
     }
 
-    override suspend fun getLastLocation(): Triple<Double, Double, Long> {
+    override suspend fun getLastLocation(): Pair<Double, Double>? {
         return withContext(Dispatchers.IO) {
             dao.getLastLocation()?.let { locationData ->
-                Triple(locationData.coordLat, locationData.coordLon, locationData.timestamp)
-            } ?: Triple(0.0, 0.0, 0L)
+                Pair(locationData.coordLat, locationData.coordLon)
+            } ?: Pair(0.0, 0.0)
         }
     }
+
     override suspend fun clearWeather() {
         withContext(Dispatchers.IO) {
             dao.clearWeather()
         }
     }
+
     override suspend fun clearForecast() {
         withContext(Dispatchers.IO) {
             dao.clearForecast()
+        }
+    }
+
+    override suspend fun getLastUpdatedWeather(): Long? {
+        return withContext(Dispatchers.IO) {
+            dao.lastUpdatedWeather()
+        }
+    }
+
+    override suspend fun getLastUpdatedForecast(): Long? {
+        return withContext(Dispatchers.IO) {
+            dao.lastUpdatedForecast()
         }
     }
 

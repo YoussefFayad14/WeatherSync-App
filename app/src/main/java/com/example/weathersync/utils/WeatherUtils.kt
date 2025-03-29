@@ -144,7 +144,10 @@ object WeatherUtils {
         return try {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", locale)
             val localDate = LocalDate.parse(date, formatter)
-            localDate.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+            val today = LocalDate.now()
+
+            if (localDate == today) "Today" else localDate.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+
         } catch (e: DateTimeParseException) {
             "Unknown"
         }

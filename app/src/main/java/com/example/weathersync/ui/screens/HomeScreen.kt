@@ -149,7 +149,6 @@ fun HomeScreenContent(
     forecastData: ForecastEntity?,
     message: String
 ) {
-    AnimatedSnackBar(message)
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -235,6 +234,7 @@ fun HomeScreenContent(
         }
         item { NextDaysForecast(viewModel, forecastData?.dailyForecasts) }
     }
+    AnimatedSnackBar(message)
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
