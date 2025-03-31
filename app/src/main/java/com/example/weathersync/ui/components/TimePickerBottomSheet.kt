@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.weathersync.R
@@ -22,6 +23,7 @@ import com.example.weathersync.ui.theme.DarkRed
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.Green1
 import com.example.weathersync.ui.theme.LightSeaGreen
+import com.example.weathersync.utils.AlertsUtils
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +75,10 @@ fun TimePickerBottomSheet(
                     }
             ) {
                 Text(
-                    text = "Selected Day: $selectedDay",
+                    text = stringResource
+                        (R.string.selected_day,
+                        if (Locale.current.language == "ar") AlertsUtils.convertNumber(selectedDay) else selectedDay
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isSystemInDarkTheme()) DeepNavyBlue else Color.White
                 )
@@ -105,7 +110,7 @@ fun TimePickerBottomSheet(
                     }
             ) {
                 Text(
-                    text = "Selected Time: %02d:%02d".format(selectedHour, selectedMinute),
+                    text = stringResource(R.string.selected_time_02d_02d).format(selectedHour, selectedMinute),
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isSystemInDarkTheme()) DeepNavyBlue else Color.White
                 )

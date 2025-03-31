@@ -51,7 +51,7 @@
     <string name="sunrise">الشروق</string>
     <string name="pressure">الضغط</string>
     <string name="temp_max">العظمي</string>
-    <string name="hpa">hpa</string>
+    <string name="hpa">هكتوباسكال</string>
     <string name="wind_speed">سرعة الرياح</string>
     <string name="humidity">الرطوبة</string>
     <string name="temp_min">الصغيري</string>
@@ -67,5 +67,14 @@
     <string name="temp_min_icon">Temp Min</string>
     <string name="humidity_icon">Humidity</string>
     <string name="clouds_icon">Clouds</string>
+    <string name="alarm_scheduled">تم ضبط المنبه</string>
+    <string name="cannot_set_an_alarm_in_the_past">لا يمكن ضبط منبه في الماضي</string>
+    <string name="no_alarms_set">لم يتم ضبط أي منبهات</string>
+    <string name="no_internet_connection">لا يوجد اتصال بالإنترنت</string>
+    <string name="favorite_weather_removed">تمت إزالة الطقس من المفضل</string>
+    <string name="no_favorites_set_yet">لم يتم تعيين أي مناطق بعد</string>
+    <string name="selected_day">اليوم المحدد: %1$s</string>
+    <string name="selected_time_02d_02d">الوقت المحدد: %02d:%02d</string>
+
 
 </resources>

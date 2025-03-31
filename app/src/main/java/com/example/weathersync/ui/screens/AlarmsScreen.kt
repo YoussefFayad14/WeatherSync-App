@@ -35,13 +35,13 @@ import com.example.weathersync.ui.theme.DeepNavyBlue1
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.AlertsUtils
 import com.example.weathersync.utils.DrawableUtils
-import com.example.weathersync.viewmodel.AlertsViewModel
+import com.example.weathersync.viewmodel.AlarmsViewModel
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ScheduleExactAlarm")
 @Composable
-fun AlertsScreen(alertViewModel: AlertsViewModel) {
+fun AlertsScreen(alertViewModel: AlarmsViewModel) {
     val context = LocalContext.current
     val isDarkMode = isSystemInDarkTheme()
     val alarms by alertViewModel.alarms.collectAsStateWithLifecycle()
@@ -121,8 +121,8 @@ fun AlertsScreen(alertViewModel: AlertsViewModel) {
                             val alarmData =
                                 AlertsUtils.convertTimeMillisToDayHourMinute(alarm.timeMillis)
                             AlarmItem(
-                                day = alarmData.first.toString(),
-                                time = "${alarmData.second}:${alarmData.third}",
+                                day = AlertsUtils.convertNumber(alarmData.first),
+                                time = "${AlertsUtils.convertNumber(alarmData.second)}:${AlertsUtils.convertNumber(alarmData.third)}",
                                 onDelete = {
                                     alertViewModel.deleteAlarm(alarm.id)
                                     alertViewModel.deleteScheduledAlarm(context, alarm.timeMillis)

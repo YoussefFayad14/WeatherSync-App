@@ -34,9 +34,10 @@ object DrawableUtils {
 
     fun getWeatherBackgroundDrawable(state: String): Int {
         return when (state) {
+            "clear_sky" -> R.raw.clear_sky_animation
             "snow" -> R.raw.snow_animation
             "rain" -> R.raw.rain_animation
-            else -> R.raw.clear_sky_animation
+            else -> 0
         }
     }
 
