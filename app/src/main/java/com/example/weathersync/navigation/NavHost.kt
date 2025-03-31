@@ -81,24 +81,27 @@ fun SetupNavHost() {
             composable(ScreenRoute.AlertsScreenRoute.route) {
                 AlertsScreen(alarmsViewModel)
             }
-            composable(ScreenRoute.SettingsScreenRoute.route) {
-                SettingsScreen(settingsViewModel)
+
+            composable(
+                route = "settings_screen?message={message}",
+                arguments = listOf(navArgument("message") { nullable = true; defaultValue = null })
+            ) { backStackEntry ->
+                val message = backStackEntry.arguments?.getString("message")
+                SettingsScreen(navController, settingsViewModel, message)
             }
 
             composable(
-                route = ScreenRoute.MapScreenRoute.route + "?lat={lat}&lon={lon}",
+                route = ScreenRoute.MapScreenRoute.route + "?lat={lat}&lon={lon}&isSettingsChanged={isSettingsChanged}",
                 arguments = listOf(
                     navArgument("lat") { nullable = true; defaultValue = null },
-                    navArgument("lon") { nullable = true; defaultValue = null }
+                    navArgument("lon") { nullable = true; defaultValue = null },
+                    navArgument("isSettingsChanged") { type = NavType.BoolType; defaultValue = false }
                 )
             ) { backStackEntry ->
                 val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull()
                 val lon = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull()
-                MapScreen(navController, favoriteViewModel, lat, lon)
-            }
-
-            composable(ScreenRoute.MapScreenRoute.route) {
-                MapScreen(navController, favoriteViewModel, null, null)
+                val isSettingsChanged = backStackEntry.arguments?.getBoolean("isSettingsChanged") == false
+                MapScreen(navController, favoriteViewModel, lat, lon, isSettingsChanged)
             }
 
             composable(ScreenRoute.SearchScreenRoute.route) {

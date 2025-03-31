@@ -3,6 +3,8 @@ package com.example.weathersync.ui.screens
 import android.app.Activity
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -21,11 +24,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.example.weathersync.R
+import com.example.weathersync.navigation.ScreenRoute.SettingsScreenRoute
 import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.components.BottomSheetContent
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.LocationProvider
+import com.example.weathersync.utils.SettingUtils
+import com.example.weathersync.utils.SharedPreferencesHelper
 import com.example.weathersync.viewmodel.FavoriteViewModel
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
@@ -38,7 +44,8 @@ fun MapScreen(
     navController: NavController,
     favoriteViewModel: FavoriteViewModel,
     lat: Double?,
-    lon: Double?
+    lon: Double?,
+    isSettingsChanged: Boolean
 ) {
     val context = LocalContext.current
     val activity = remember { context as? Activity }
@@ -49,8 +56,34 @@ fun MapScreen(
     var marker by remember { mutableStateOf<Marker?>(null) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showBottomSheet by remember { mutableStateOf(false) }
-    var snackbarMessage by remember { mutableStateOf<String?>(null) }
     val initialLocation = lat?.let { LatLng(it, lon ?: 0.0) }
+    var isLocationConfirmed by rememberSaveable { mutableStateOf(false) }
+
+
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val backCallback = remember {
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (!isLocationConfirmed && isSettingsChanged) {
+                    // User backed out without selecting a location, revert settings
+                    val storeLocationType = SettingUtils.toSharedPreferencesLocation("Gps")
+                    SharedPreferencesHelper.saveSetting(
+                        context,
+                        SharedPreferencesHelper.KEY_LOCATION_TYPE,
+                        storeLocationType
+                    )
+                }
+                navController.popBackStack()
+            }
+        }
+    }
+
+    DisposableEffect(backDispatcher) {
+        backDispatcher?.addCallback(backCallback)
+        onDispose {
+            backCallback.remove()
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (initialLocation != null) {
@@ -108,10 +141,10 @@ fun MapScreen(
                     marker = newMarker
                     selectedLocation = newLocation
                     showBottomSheet = true
+                    isLocationConfirmed = true
                 }
             }
         }
-        AnimatedSnackBar(message = snackbarMessage)
         if (showBottomSheet && selectedLocation != null) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
@@ -121,10 +154,26 @@ fun MapScreen(
                     selectedLocation = selectedLocation!!,
                     onCancel = { showBottomSheet = false },
                     onSave = {
-                        Log.d("MapScreen", "Saved Location: ${selectedLocation!!.latitude}, ${selectedLocation!!.longitude}")
-                        favoriteViewModel.insertFavorite(selectedLocation?.latitude, selectedLocation?.longitude)
-                        showBottomSheet = false
-                        snackbarMessage = "Location Saved Successfully"
+                        selectedLocation?.let { location ->
+                            if (isSettingsChanged && isLocationConfirmed) {
+                                SharedPreferencesHelper.saveLocation(
+                                    context,
+                                    location.latitude,
+                                    location.longitude
+                                )
+                                showBottomSheet = false
+                                navController.navigate(SettingsScreenRoute.createRoute(context.getString(R.string.location_saved_successfully))) {
+                                    popUpTo("map_screen") { inclusive = true }
+                                }
+                            } else if (!isSettingsChanged) {
+                                favoriteViewModel.insertFavorite(
+                                    location.latitude,
+                                    location.longitude
+                                )
+                                showBottomSheet = false
+                                navController.navigate("favorites_screen")
+                            }
+                        }
                     }
                 )
             }
@@ -136,7 +185,7 @@ private fun setupMap(
     googleMap: GoogleMap,
     userLocation: LatLng?,
     selectedLocation: LatLng?,
-    onLocationSelected: (LatLng, Marker) -> Unit
+    onLocationSelected: (LatLng, Marker) -> Unit,
 ) {
     googleMap.uiSettings.isZoomControlsEnabled = true
     googleMap.uiSettings.isMyLocationButtonEnabled = true
@@ -156,6 +205,11 @@ private fun setupMap(
         googleMap.clear()
         val clickedMarker = googleMap.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
         onLocationSelected(latLng, clickedMarker!!)
+        googleMap.setOnMapClickListener { latLng ->
+            googleMap.clear()
+            val clickedMarker = googleMap.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
+            onLocationSelected(latLng, clickedMarker!!)
+        }
     }
 }
 

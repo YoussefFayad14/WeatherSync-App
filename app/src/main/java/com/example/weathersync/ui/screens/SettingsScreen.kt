@@ -24,14 +24,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.weathersync.R
+import com.example.weathersync.navigation.ScreenRoute.MapScreenRoute
+import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.LocaleHelper
 import com.example.weathersync.viewmodel.SettingsViewModel
+import kotlinx.coroutines.delay
 
 @Composable
-fun SettingsScreen(settingsViewModel: SettingsViewModel) {
+fun SettingsScreen(navController: NavController, settingsViewModel: SettingsViewModel, mapMessage: String?) {
     val context = LocalContext.current
     val backgroundColor = if (isSystemInDarkTheme()) DeepNavyBlue else LightSeaGreen
 
@@ -39,9 +43,26 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
     val currentTempUnit by settingsViewModel.selectedTempUnit.collectAsState()
     val currentLocationType by settingsViewModel.selectedLocationType.collectAsState()
     val currentWindSpeed by settingsViewModel.selectedWindSpeedUnit.collectAsState()
+    val message by settingsViewModel.message.collectAsStateWithLifecycle()
 
     var needsRecreation by rememberSaveable { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var showSnackBar by remember { mutableStateOf(false) }
 
+    LaunchedEffect(message, mapMessage) {
+        message?.let {
+            snackbarMessage = Pair(it.first, it.second)
+            showSnackBar = true
+        }
+        mapMessage?.let {
+            snackbarMessage = if (snackbarMessage == null) {
+                Pair(it, "Success")
+            } else {
+                Pair("${snackbarMessage?.first} | $it", "Success")
+            }
+            showSnackBar = true
+        }
+    }
 
     LaunchedEffect(needsRecreation) {
         if (needsRecreation) {
@@ -62,6 +83,7 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
         item {
             SettingsSection(
                 iconRes = R.drawable.language_icon,
@@ -73,6 +95,7 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                 ),
                 selectedOption = currentLanguage,
                 onOptionSelected = {
+                    if(currentLanguage == it) return@SettingsSection
                     settingsViewModel.setLanguage(context, it)
                     needsRecreation = true
                 }
@@ -89,6 +112,7 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                 ),
                 selectedOption = currentTempUnit,
                 onOptionSelected = {
+                    if(currentTempUnit == it) return@SettingsSection
                     settingsViewModel.setTempUnit(context, it)
                 }
             )
@@ -104,7 +128,11 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                 ),
                 selectedOption = currentLocationType,
                 onOptionSelected = {
+                    if(currentLocationType == it) return@SettingsSection
                     settingsViewModel.setLocationType(context, it)
+                    settingsViewModel.handleSetLocationType(context) {
+                        navController.navigate(MapScreenRoute.createRoute(null, null, true))
+                    }
                 }
             )
         }
@@ -119,9 +147,19 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                 ),
                 selectedOption = currentWindSpeed,
                 onOptionSelected = {
+                    if(currentWindSpeed == it) return@SettingsSection
                     settingsViewModel.setWindSpeedUnit(context, it)
                 }
             )
+        }
+    }
+    if (showSnackBar && snackbarMessage != null) {
+        AnimatedSnackBar(snackbarMessage!!.first, snackbarMessage!!.second)
+
+        LaunchedEffect(snackbarMessage) {
+            delay(3000)
+            showSnackBar = false
+            snackbarMessage = null
         }
     }
 }
@@ -199,5 +237,6 @@ fun SettingsSection(
 @Composable
 fun PreviewSettingsScreen() {
     val fakeViewModel = SettingsViewModel(context = LocalContext.current)
-    SettingsScreen(fakeViewModel)
+    val fakeNavController = NavController(LocalContext.current)
+    SettingsScreen(fakeNavController,fakeViewModel,null)
 }

@@ -1,5 +1,7 @@
 package com.example.weathersync.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +24,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.weathersync.R
 import com.example.weathersync.data.model.local.WeatherEntity
+import com.example.weathersync.ui.theme.DeepNavyBlue
+import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.DrawableUtils
 import com.example.weathersync.utils.WeatherUtils
 
@@ -31,7 +35,11 @@ fun WeatherDetailsScreen(
     weatherEntity: WeatherEntity?
 ) {
     val context = LocalContext.current
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (isSystemInDarkTheme()) DeepNavyBlue else LightSeaGreen)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,

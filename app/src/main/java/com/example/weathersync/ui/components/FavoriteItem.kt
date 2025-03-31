@@ -124,7 +124,7 @@ fun FavoriteItem(
                                 verticalAlignment = Alignment.Top
                             ) {
                                 Text(
-                                    text = WeatherUtils.getFormattedTemperature(item.weatherEntity!!.temp, context),
+                                    text = WeatherUtils.getFormattedTemperature(item.weatherEntity?.temp ?:0.0 , context),
                                     fontSize = 16.sp,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
