@@ -130,7 +130,7 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
                                     Text(
                                         text = stringResource(R.string.no_favorites_set_yet),
                                         fontSize = 24.sp,
-                                        color = if (isSystemInDarkTheme()) Color.White else Color.Black,
+                                        color = Color.White ,
                                     )
                                 }
                             }

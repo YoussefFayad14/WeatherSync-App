@@ -74,5 +74,7 @@
     <string name="no_favorites_set_yet">No favorites set yet</string>
     <string name="selected_day">Selected Day: %1$s</string>
     <string name="selected_time_02d_02d">Selected Time: %02d:%02d</string>
+    <string name="location_saved_successfully">Location Saved Successfully</string>
+    <string name="please_select_a_location_first">Please select a location first</string>
 
 </resources>

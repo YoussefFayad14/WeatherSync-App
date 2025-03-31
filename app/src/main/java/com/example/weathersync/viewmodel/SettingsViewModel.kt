@@ -1,9 +1,13 @@
 package com.example.weathersync.viewmodel
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.example.weathersync.R
 import com.example.weathersync.utils.LocaleHelper
+import com.example.weathersync.utils.LocationProvider
 import com.example.weathersync.utils.SettingUtils
 import com.example.weathersync.utils.SharedPreferencesHelper
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +26,9 @@ class SettingsViewModel(context: Context) : ViewModel() {
 
     private val _selectedWindSpeedUnit = MutableStateFlow("")
     val selectedWindSpeedUnit = _selectedWindSpeedUnit.asStateFlow()
+
+    private val _message = MutableStateFlow<Pair<String, String>>(Pair("", ""))
+    val message = _message.asStateFlow()
 
     init {
         reloadSettings(context)
@@ -50,6 +57,26 @@ class SettingsViewModel(context: Context) : ViewModel() {
         val storedUnit = SettingUtils.toSharedPreferencesWind(unit)
         SharedPreferencesHelper.saveSetting(context, SharedPreferencesHelper.KEY_WIND_SPEED_UNIT, storedUnit)
         _selectedWindSpeedUnit.value = SettingUtils.fromSharedPreferencesWind(storedUnit)
+    }
+
+    @SuppressLint("SuspiciousIndentation")
+    fun handleSetLocationType(context: Context, navigate:() -> Unit) {
+      val savedLocationType = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LOCATION_TYPE)
+        if (savedLocationType == "Map") {
+            navigate()
+        }else{
+            val locationProvider = LocationProvider(context)
+            locationProvider.getUserLocation(
+                callback = { latitude, longitude ->
+                    SharedPreferencesHelper.saveLocation(context, latitude, longitude)
+                },
+                onError = { errorMessage ->
+                    _message.value = Pair(errorMessage,"Error")
+                },
+                activity = context as Activity
+            )
+        }
+
     }
 
     fun reloadSettings(context: Context) {

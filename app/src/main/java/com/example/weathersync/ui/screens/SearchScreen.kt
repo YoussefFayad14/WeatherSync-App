@@ -102,7 +102,7 @@ fun SearchScreen(navController: NavController, searchViewModel: SearchViewModel)
                                 scope.launch {
                                     val location = searchViewModel.fetchPlaceDetails(place.placeId)
                                     location?.let {
-                                        navController.navigate(MapScreenRoute.createRoute(it.first, it.second))
+                                        navController.navigate(MapScreenRoute.createRoute(it.first, it.second,false))
                                     }
                                     Log.d("SearchScreen", "Fetched location: Lat: ${location?.first}, Lng: ${location?.second}")
                                 }

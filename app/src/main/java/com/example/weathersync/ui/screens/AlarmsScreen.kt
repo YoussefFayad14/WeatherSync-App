@@ -111,7 +111,7 @@ fun AlertsScreen(alertViewModel: AlarmsViewModel) {
                                     Text(
                                         text = stringResource(R.string.no_alarms_set),
                                         fontSize = 24.sp,
-                                        color = if (isDarkMode) Color.White else Color.Black,
+                                        color = Color.White,
                                     )
                                 }
                             }

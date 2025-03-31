@@ -75,6 +75,8 @@
     <string name="no_favorites_set_yet">لم يتم تعيين أي مناطق بعد</string>
     <string name="selected_day">اليوم المحدد: %1$s</string>
     <string name="selected_time_02d_02d">الوقت المحدد: %02d:%02d</string>
+    <string name="location_saved_successfully">تم حفظ الموقع بنجاح</string>
+    <string name="please_select_a_location_first">يرجى اختيار موقع أولاً</string>
 
 
 </resources>
