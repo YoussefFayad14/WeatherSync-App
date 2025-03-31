@@ -2,6 +2,7 @@ package com.example.weathersync.viewmodel
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
@@ -16,10 +17,14 @@ import com.example.weathersync.utils.LocationProvider
 import com.example.weathersync.data.model.local.WeatherEntity
 import com.example.weathersync.utils.DrawableUtils
 import com.example.weathersync.utils.NetworkHelper
+import com.example.weathersync.utils.SharedPreferencesHelper
 import com.example.weathersync.utils.WeatherUtils
+import com.example.weathersync.utils.WeatherUtils.getTemperatureUnitSymbol
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
@@ -37,9 +42,6 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
 
     fun loadCurrentWeather() { viewModelScope.launch {
             getCurrentLocation(context as Activity)
-            while (location.value == null || location.value!!.first == 0.0 || location.value!!.second == 0.0) {
-                delay(500)
-            }
             val lastLocation = repository.getLastLocation()
             val lastUpdatedWeather = repository.getLastUpdatedWeather()?:0
             val currentTime = System.currentTimeMillis()
@@ -149,6 +151,11 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
     fun getTemperatureSymbol(): String {
         return WeatherUtils.getTemperatureUnitSymbol(context)
     }
+
+    fun getLocalizedWeatherDescription(value: String): String{
+        return WeatherUtils.formatWeatherDescriptionForLocale(context, value)
+    }
+
     fun getConvertedWindSpeed(value: Double): String {
         return WeatherUtils.getFormattedWindSpeed(value, context)
     }
@@ -176,6 +183,10 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
 
     fun convertUnixToDate(unixTime: Long?): String {
         return WeatherUtils.getFormattedDateFromTimestamp(context, unixTime)
+    }
+
+    fun covertNumbers(num: String): String{
+        return WeatherUtils.convertNumberToLocale(context,num)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

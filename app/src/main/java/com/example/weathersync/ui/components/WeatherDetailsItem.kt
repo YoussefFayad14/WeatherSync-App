@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun WeatherDetailItem(icon: Int, label: String, value: String) {
+fun WeatherDetailsItem(icon: Int, label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Image(
             painter = painterResource(id = icon),

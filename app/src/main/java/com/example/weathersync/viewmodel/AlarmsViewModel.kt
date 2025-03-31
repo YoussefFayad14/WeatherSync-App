@@ -2,6 +2,7 @@ package com.example.weathersync.viewmodel
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.text.intl.Locale
 import java.util.concurrent.TimeUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,13 +24,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class AlertsViewModel(
+class AlarmsViewModel(
     context: Context,
     private val repository: AlarmRepository,
 ) : ViewModel() {
     private val _alarms = MutableStateFlow<Response<List<AlarmEntity>>>(Response.Loading)
     val alarms = _alarms.asStateFlow()
-
     private val _message = MutableStateFlow("")
     val message = _message.asStateFlow()
 
