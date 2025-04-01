@@ -45,11 +45,10 @@ fun MapScreen(
     favoriteViewModel: FavoriteViewModel,
     lat: Double?,
     lon: Double?,
-    isSettingsChanged: Boolean
+    isSettingsChanged: Boolean = false
 ) {
     val context = LocalContext.current
     val activity = remember { context as? Activity }
-    val mapView = rememberMapViewWithLifecycle()
     val locationProvider = remember { LocationProvider(context) }
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
@@ -132,19 +131,22 @@ fun MapScreen(
             }
         }
         AndroidView(
-            factory = { mapView },
-            modifier = Modifier.fillMaxSize()
-        ) { mapView ->
-            mapView.getMapAsync { googleMap ->
-                setupMap(googleMap, initialLocation?: userLocation, selectedLocation) { newLocation, newMarker ->
-                    marker?.remove()
-                    marker = newMarker
-                    selectedLocation = newLocation
-                    showBottomSheet = true
-                    isLocationConfirmed = true
+            factory = { context ->
+                MapView(context).apply { onCreate(null) }
+            },
+            modifier = Modifier.fillMaxSize(),
+            update = { mapView ->
+                mapView.getMapAsync { googleMap ->
+                    setupMap(googleMap, initialLocation ?: userLocation, selectedLocation) { newLocation, newMarker ->
+                        marker?.remove()
+                        marker = newMarker
+                        selectedLocation = newLocation
+                        showBottomSheet = true
+                        isLocationConfirmed = true
+                    }
                 }
             }
-        }
+        )
         if (showBottomSheet && selectedLocation != null) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
@@ -155,6 +157,7 @@ fun MapScreen(
                     onCancel = { showBottomSheet = false },
                     onSave = {
                         selectedLocation?.let { location ->
+                            Log.d("MapScreen", "Saving location: $isSettingsChanged")
                             if (isSettingsChanged && isLocationConfirmed) {
                                 SharedPreferencesHelper.saveLocation(
                                     context,

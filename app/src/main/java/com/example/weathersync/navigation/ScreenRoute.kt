@@ -34,9 +34,10 @@ sealed class ScreenRoute(val route: String) {
     object MapScreenRoute : ScreenRoute("map_screen") {
         fun createRoute(lat: Double? = null, lon: Double? = null, isSettingsChanged: Boolean): String {
             return buildString {
-                append("map_screen")
+                append("map_screen?")
+                append("isSettingsChanged=$isSettingsChanged")
                 if (lat != null && lon != null) {
-                    append("?lat=$lat&lon=$lon&isSettingsChanged=$isSettingsChanged")
+                    append("&lat=$lat&lon=$lon")
                 }
             }
         }

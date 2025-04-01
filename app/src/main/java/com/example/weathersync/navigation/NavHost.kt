@@ -100,7 +100,7 @@ fun SetupNavHost() {
             ) { backStackEntry ->
                 val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull()
                 val lon = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull()
-                val isSettingsChanged = backStackEntry.arguments?.getBoolean("isSettingsChanged") == false
+                val isSettingsChanged = backStackEntry.arguments?.getBoolean("isSettingsChanged") ?: false
                 MapScreen(navController, favoriteViewModel, lat, lon, isSettingsChanged)
             }
 

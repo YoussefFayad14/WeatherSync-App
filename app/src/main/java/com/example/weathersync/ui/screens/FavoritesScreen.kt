@@ -76,7 +76,7 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("map_screen") },
+                onClick = { navController.navigate(MapScreenRoute.createRoute(null, null, false)) },
                 containerColor = if (isSystemInDarkTheme()) DeepNavyBlue1 else LightSeaGreen
             ) {
                 Image(
