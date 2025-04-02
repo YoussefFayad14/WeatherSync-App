@@ -82,5 +82,6 @@
     <string name="undo">Undo</string>
     <string name="alarm_deleted">Alarm deleted</string>
     <string name="snooze">Snooze</string>
+    <string name="stop">Stop</string>
 
 </resources>

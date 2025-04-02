@@ -29,6 +29,7 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
     private var ringtone: Ringtone? = null
     private var message: String? = null
     private var isPlayingSound = false
+    private val stopAction = "com.example.weathersync.STOP_ALARM"
 
     override fun onCreate() {
         super.onCreate()
@@ -72,6 +73,10 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
                 Log.w("AlarmService", "TTS not initialized yet, waiting...")
             }
         }
+        if (intent?.action == "STOP_ALARM_SERVICE") {
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         return START_STICKY
     }
@@ -99,6 +104,13 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val stopIntent = Intent(this, AlarmService::class.java).apply {
+            action = "STOP_ALARM_SERVICE"
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         return NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.app_logo)
             .setContentTitle(title)
@@ -109,6 +121,11 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setOngoing(true)
+            .addAction(
+                0,
+                getString(R.string.stop),
+                stopPendingIntent
+            )
             .build()
     }
 

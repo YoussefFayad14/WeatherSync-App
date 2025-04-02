@@ -83,5 +83,6 @@
     <string name="undo">تراجع</string>
     <string name="alarm_deleted">تم حذف المنبه</string>
     <string name="snooze">تأجيل</string>
+    <string name="stop">إيقاف</string>
 
 </resources>
