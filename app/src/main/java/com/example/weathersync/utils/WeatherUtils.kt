@@ -19,6 +19,7 @@ object WeatherUtils {
         val languageCode = when (languageSetting.lowercase(Locale.ROOT)) {
             "arabic" -> "ar"
             "english" -> "en"
+            "default" -> context.resources.configuration.locales[0].language
             else -> "en"
         }
         val weatherDescriptions = mapOf(
@@ -111,15 +112,6 @@ object WeatherUtils {
         return dateFormat.format(Date())
     }
 
-    fun getFormattedTime(context: Context): String {
-        val languageCode = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
-        val locale = Locale(languageCode)
-        val timeFormat = SimpleDateFormat("hh:mm a", locale)
-
-        return timeFormat.format(Date())
-    }
-
-
     fun getFormattedDate(context: Context): String {
         val languageCode = SharedPreferencesHelper.getSetting(context, SharedPreferencesHelper.KEY_LANGUAGE)
         val locale = Locale(languageCode)
@@ -147,6 +139,7 @@ object WeatherUtils {
         val languageCode = when (languageSetting.lowercase(Locale.ROOT)) {
             "arabic" -> "ar"
             "english" -> "en"
+            "default" -> context.resources.configuration.locales[0].language
             else -> "en"
         }
 
@@ -164,6 +157,7 @@ object WeatherUtils {
         val languageCode = when (languageSetting.lowercase(Locale.ROOT)) {
             "arabic" -> "ar"
             "english" -> "en"
+            "default" -> context.resources.configuration.locales[0].language
             else -> "en"
         }
         return if (languageCode == "ar") {
@@ -196,6 +190,8 @@ object WeatherUtils {
 
             when (languageSetting) {
                 "arabic" -> SimpleDateFormat("EEEE", Locale("ar", "SA")).format(parsedDate)
+                "english" -> SimpleDateFormat("EEEE", Locale.ENGLISH).format(parsedDate)
+                "default" -> SimpleDateFormat("EEEE", context.resources.configuration.locales[0]).format(parsedDate)
                 else -> SimpleDateFormat("EEEE", Locale.ENGLISH).format(parsedDate)
             }
         } catch (e: Exception) {
