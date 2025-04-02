@@ -1,7 +1,6 @@
 package com.example.weathersync.data.repository
 
 import com.example.weathersync.data.local.LocalFavoriteWeatherDataSource
-import com.example.weathersync.data.model.Response
 import com.example.weathersync.data.model.local.FavoriteEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -21,7 +20,7 @@ class FavoriteRepositoryImpl (
         return localFavoriteWeatherDataSource.getFavorite(lat, lon)
     }
 
-    override fun getAllFavorites(): Flow<Response<List<FavoriteEntity>>> {
+    override fun getAllFavorites(): Flow<List<FavoriteEntity>> {
         return localFavoriteWeatherDataSource.getAllFavorites()
     }
 }

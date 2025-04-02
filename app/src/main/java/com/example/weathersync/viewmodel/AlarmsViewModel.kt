@@ -2,6 +2,7 @@ package com.example.weathersync.viewmodel
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.text.intl.Locale
 import java.util.concurrent.TimeUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,18 +19,18 @@ import com.example.weathersync.data.repository.AlarmRepository
 import com.example.weathersync.utils.AlertsUtils.calculateInitialDelay
 import com.example.weathersync.worker.AlarmWorker
 import com.example.weathersync.worker.DeletePastAlarmsWorker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class AlertsViewModel(
+class AlarmsViewModel(
     context: Context,
     private val repository: AlarmRepository,
 ) : ViewModel() {
     private val _alarms = MutableStateFlow<Response<List<AlarmEntity>>>(Response.Loading)
     val alarms = _alarms.asStateFlow()
-
     private val _message = MutableStateFlow("")
     val message = _message.asStateFlow()
 
@@ -38,26 +39,22 @@ class AlertsViewModel(
     }
 
     fun insertAlarm(timeMillis: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.insertAlarm(AlarmEntity(timeMillis = timeMillis))
         }
     }
 
     fun deleteAlarm(alarmId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.deleteAlarm(alarmId)
         }
     }
 
     fun getAllAlarms() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.getAllAlarms()
                 .catch { ex -> _message.value = "Error: ${ex.message}" }
-                .collect { response ->
-                    if (response is Response.Success) {
-                        _alarms.value = Response.Success(response.data ?: emptyList())
-                    }
-                }
+                .collect { _alarms.value = Response.Success(it) }
         }
     }
 

@@ -33,25 +33,21 @@ class AlarmWorker(
 
             val currentWeather = repository.getWeatherList()
 
-            if (currentWeather is Response.Success) {
-                val currentWeatherData = currentWeather.data.firstOrNull()
-                if (currentWeatherData != null) {
-                    val alarmIntent = Intent("com.example.weathersync.ALARM_TRIGGER").apply {
-                        setPackage(applicationContext.packageName)
-                        putExtra("temperature", currentWeatherData.temp)
-                        putExtra("description", currentWeatherData.description)
-                        putExtra("humidity", currentWeatherData.humidity)
-                        putExtra("currentTemperatureUnit", currentTemperatureUnit)
-                    }
-                    Log.d("AlarmWorker", "Sending broadcast: $alarmIntent")
-                    applicationContext.sendBroadcast(alarmIntent)
-                    Log.d("AlarmWorker", "Alarm triggered successfully")
-                    return Result.success()
-                } else {
-                    Log.e("AlarmWorker", "No weather data found")
+            val currentWeatherData = currentWeather.firstOrNull()
+            if (currentWeatherData != null) {
+                val alarmIntent = Intent("com.example.weathersync.ALARM_TRIGGER").apply {
+                    setPackage(applicationContext.packageName)
+                    putExtra("temperature", currentWeatherData.temp)
+                    putExtra("description", currentWeatherData.description)
+                    putExtra("humidity", currentWeatherData.humidity)
+                    putExtra("currentTemperatureUnit", currentTemperatureUnit)
                 }
+                Log.d("AlarmWorker", "Sending broadcast: $alarmIntent")
+                applicationContext.sendBroadcast(alarmIntent)
+                Log.d("AlarmWorker", "Alarm triggered successfully")
+                return Result.success()
             } else {
-                Log.e("AlarmWorker", "Failed to fetch weather data")
+                Log.e("AlarmWorker", "No weather data found")
             }
             Result.failure()
         } catch (e: Exception) {

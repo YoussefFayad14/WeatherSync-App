@@ -18,8 +18,8 @@ import com.example.weathersync.data.model.local.WeatherEntity
 import com.example.weathersync.ui.screens.*
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
-import com.example.weathersync.viewmodel.AlertsViewModel
-import com.example.weathersync.viewmodel.AlertsViewModelFactory
+import com.example.weathersync.viewmodel.AlarmsViewModel
+import com.example.weathersync.viewmodel.AlarmsViewModelFactory
 import com.example.weathersync.viewmodel.FavoriteViewModel
 import com.example.weathersync.viewmodel.FavoriteViewModelFactory
 import com.example.weathersync.viewmodel.SearchViewModel
@@ -43,8 +43,8 @@ fun SetupNavHost() {
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(LocalContext.current)
     )
-    val alertsViewModel: AlertsViewModel = viewModel(
-        factory = AlertsViewModelFactory(LocalContext.current)
+    val alarmsViewModel: AlarmsViewModel = viewModel(
+        factory = AlarmsViewModelFactory(LocalContext.current)
     )
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModelFactory(LocalContext.current)
@@ -79,26 +79,29 @@ fun SetupNavHost() {
                 FavoritesScreen(navController, favoriteViewModel)
             }
             composable(ScreenRoute.AlertsScreenRoute.route) {
-                AlertsScreen(alertsViewModel)
-            }
-            composable(ScreenRoute.SettingsScreenRoute.route) {
-                SettingsScreen(settingsViewModel)
+                AlertsScreen(alarmsViewModel)
             }
 
             composable(
-                route = ScreenRoute.MapScreenRoute.route + "?lat={lat}&lon={lon}",
+                route = "settings_screen?message={message}",
+                arguments = listOf(navArgument("message") { nullable = true; defaultValue = null })
+            ) { backStackEntry ->
+                val message = backStackEntry.arguments?.getString("message")
+                SettingsScreen(navController, settingsViewModel, message)
+            }
+
+            composable(
+                route = ScreenRoute.MapScreenRoute.route + "?lat={lat}&lon={lon}&isSettingsChanged={isSettingsChanged}",
                 arguments = listOf(
                     navArgument("lat") { nullable = true; defaultValue = null },
-                    navArgument("lon") { nullable = true; defaultValue = null }
+                    navArgument("lon") { nullable = true; defaultValue = null },
+                    navArgument("isSettingsChanged") { type = NavType.BoolType; defaultValue = false }
                 )
             ) { backStackEntry ->
                 val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull()
                 val lon = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull()
-                MapScreen(navController, favoriteViewModel, lat, lon)
-            }
-
-            composable(ScreenRoute.MapScreenRoute.route) {
-                MapScreen(navController, favoriteViewModel, null, null)
+                val isSettingsChanged = backStackEntry.arguments?.getBoolean("isSettingsChanged") ?: false
+                MapScreen(navController, favoriteViewModel, lat, lon, isSettingsChanged)
             }
 
             composable(ScreenRoute.SearchScreenRoute.route) {

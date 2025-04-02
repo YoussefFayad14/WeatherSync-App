@@ -27,6 +27,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.weathersync.R
 import com.example.weathersync.data.model.Response
+import com.example.weathersync.data.model.local.AlarmEntity
 import com.example.weathersync.ui.components.AlarmItem
 import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.components.TimePickerBottomSheet
@@ -35,19 +36,22 @@ import com.example.weathersync.ui.theme.DeepNavyBlue1
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.AlertsUtils
 import com.example.weathersync.utils.DrawableUtils
-import com.example.weathersync.viewmodel.AlertsViewModel
+import com.example.weathersync.viewmodel.AlarmsViewModel
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ScheduleExactAlarm")
 @Composable
-fun AlertsScreen(alertViewModel: AlertsViewModel) {
+fun AlertsScreen(alertViewModel: AlarmsViewModel) {
     val context = LocalContext.current
     val isDarkMode = isSystemInDarkTheme()
     val alarms by alertViewModel.alarms.collectAsStateWithLifecycle()
     var showBottomSheet by remember { mutableStateOf(false) }
     var isAlarmScheduled by remember { mutableStateOf(false) }
     var showPastAlarmError by remember { mutableStateOf(false) }
+    var isAlarmRemove by remember { mutableStateOf(false) }
+    var deletedAlarm by remember { mutableStateOf<AlarmEntity?>(null) }
+
 
     LaunchedEffect(Unit) {
         alertViewModel.getAllAlarms()
@@ -111,7 +115,7 @@ fun AlertsScreen(alertViewModel: AlertsViewModel) {
                                     Text(
                                         text = stringResource(R.string.no_alarms_set),
                                         fontSize = 24.sp,
-                                        color = if (isDarkMode) Color.White else Color.Black,
+                                        color = Color.White,
                                     )
                                 }
                             }
@@ -121,11 +125,13 @@ fun AlertsScreen(alertViewModel: AlertsViewModel) {
                             val alarmData =
                                 AlertsUtils.convertTimeMillisToDayHourMinute(alarm.timeMillis)
                             AlarmItem(
-                                day = alarmData.first.toString(),
-                                time = "${alarmData.second}:${alarmData.third}",
+                                day = AlertsUtils.convertNumber(alarmData.first),
+                                time = "${AlertsUtils.convertNumber(alarmData.second)}:${AlertsUtils.convertNumber(alarmData.third)}",
                                 onDelete = {
+                                    deletedAlarm = alarm
                                     alertViewModel.deleteAlarm(alarm.id)
                                     alertViewModel.deleteScheduledAlarm(context, alarm.timeMillis)
+                                    isAlarmRemove = true
                                 },
                                 modifier = Modifier.animateItemPlacement(tween(200))
                             )
@@ -147,6 +153,26 @@ fun AlertsScreen(alertViewModel: AlertsViewModel) {
                 }
             }
         }
+        if (isAlarmRemove) {
+            AnimatedSnackBar(
+                message = stringResource(R.string.alarm_deleted),
+                type = "Success",
+                showUndoButton = true,
+                onUndoClick = {
+                    deletedAlarm?.let { alarm ->
+                        alertViewModel.insertAlarm(alarm.timeMillis)
+                        alertViewModel.scheduleAlarm(context, alarm.timeMillis)
+                    }
+                    isAlarmRemove = false
+                    deletedAlarm = null
+                }
+            )
+            LaunchedEffect(Unit) {
+                delay(5000)
+                isAlarmRemove = false
+                deletedAlarm = null
+            }
+        }
         if (isAlarmScheduled) {
             AnimatedSnackBar(stringResource(R.string.alarm_scheduled),"Success")
             LaunchedEffect(Unit) {
@@ -162,7 +188,6 @@ fun AlertsScreen(alertViewModel: AlertsViewModel) {
             }
         }
     }
-
     if (showBottomSheet) {
         TimePickerBottomSheet(
             context = context,

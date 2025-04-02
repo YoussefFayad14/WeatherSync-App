@@ -29,8 +29,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun FavoriteItem(
     item: FavoriteEntity,
-    navigateTo: () -> Unit,
-    onRemove: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -38,17 +37,10 @@ fun FavoriteItem(
     val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
         confirmValueChange = { state ->
             when (state) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    scope.launch {
-                        delay(1000)
-                        navigateTo()
-                    }
-                    true
-                }
                 SwipeToDismissBoxValue.EndToStart -> {
                     scope.launch {
-                        delay(1000)
-                        onRemove()
+                        delay(500)
+                        onDelete()
                     }
                     true
                 }
@@ -62,7 +54,6 @@ fun FavoriteItem(
         backgroundContent = {
             val backgroundColor by animateColorAsState(
                 targetValue = when (swipeToDismissBoxState.currentValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> Color.Green
                     SwipeToDismissBoxValue.EndToStart -> Color.Red
                     else -> Color.Transparent
                 },
@@ -74,11 +65,11 @@ fun FavoriteItem(
                     .fillMaxWidth()
                     .height(80.dp)
                     .background(backgroundColor, RoundedCornerShape(16.dp))
-                    .padding(4.dp)
+                    .padding(4.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (swipeToDismissBoxState.currentValue == SwipeToDismissBoxValue.StartToEnd)
-                        stringResource(R.string.weather_details) else stringResource(R.string.delete),
+                    text = stringResource(R.string.delete),
                     fontSize = 20.sp,
                     modifier = Modifier.align(Alignment.Center),
                     color = Color.White
@@ -124,7 +115,7 @@ fun FavoriteItem(
                                 verticalAlignment = Alignment.Top
                             ) {
                                 Text(
-                                    text = WeatherUtils.getFormattedTemperature(item.weatherEntity!!.temp, context),
+                                    text = WeatherUtils.getFormattedTemperature(item.weatherEntity?.temp ?:0.0 , context),
                                     fontSize = 16.sp,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold

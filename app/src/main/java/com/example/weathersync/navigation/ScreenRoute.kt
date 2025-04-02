@@ -17,21 +17,32 @@ sealed class ScreenRoute(val route: String) {
     object FavoritesScreenRoute : ScreenRoute("favorites_screen")
 
     @Serializable
-    object SettingsScreenRoute : ScreenRoute("settings_screen")
+    object SettingsScreenRoute : ScreenRoute("settings_screen") {
+        fun createRoute(message: String? = null): String {
+            return if (message.isNullOrEmpty()) {
+                "settings_screen"
+            } else {
+                "settings_screen?message=${Uri.encode(message)}"
+            }
+        }
+    }
 
     @Serializable
     object AlertsScreenRoute : ScreenRoute("alerts_screen")
 
     @Serializable
     object MapScreenRoute : ScreenRoute("map_screen") {
-        fun createRoute(lat: Double?, lon: Double?): String {
-            return if (lat != null && lon != null) {
-                "map_screen?lat=$lat&lon=$lon"
-            } else {
-                "map_screen"
+        fun createRoute(lat: Double? = null, lon: Double? = null, isSettingsChanged: Boolean): String {
+            return buildString {
+                append("map_screen?")
+                append("isSettingsChanged=$isSettingsChanged")
+                if (lat != null && lon != null) {
+                    append("&lat=$lat&lon=$lon")
+                }
             }
         }
     }
+
 
     @Serializable
     object SearchScreenRoute : ScreenRoute("search_screen")

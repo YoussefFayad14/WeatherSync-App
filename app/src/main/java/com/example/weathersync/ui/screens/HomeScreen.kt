@@ -18,16 +18,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices.PIXEL_5
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.weathersync.R
@@ -37,7 +38,7 @@ import com.example.weathersync.data.model.local.ForecastEntity
 import com.example.weathersync.data.model.local.WeatherEntity
 import com.example.weathersync.ui.components.AnimatedSnackBar
 import com.example.weathersync.ui.components.HourlyForecastItem
-import com.example.weathersync.ui.components.WeatherDetailItem
+import com.example.weathersync.ui.components.WeatherDetailsItem
 import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.DrawableUtils
@@ -45,6 +46,7 @@ import com.example.weathersync.viewmodel.WeatherViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -57,10 +59,17 @@ fun HomeScreen(weatherViewModel: WeatherViewModel) {
     val message by weatherViewModel.message.collectAsStateWithLifecycle()
     var isRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberSwipeRefreshState(isRefreshing)
+    var showSnackBar by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         weatherViewModel.loadCurrentWeather()
         weatherViewModel.loadForecast()
+    }
+
+    LaunchedEffect(message) {
+        if (message.isNotEmpty()) {
+            showSnackBar = true
+        }
     }
 
     SwipeRefresh(
@@ -108,7 +117,7 @@ fun HomeScreen(weatherViewModel: WeatherViewModel) {
                                 currentWeatherResponse,
                                 forecastResponse,
                                 message
-                            )
+                                )
                         }
                     }
                     is Response.Failure -> {
@@ -122,7 +131,13 @@ fun HomeScreen(weatherViewModel: WeatherViewModel) {
                     }
 
                 }
-
+                if (showSnackBar) {
+                    AnimatedSnackBar(message)
+                    LaunchedEffect(Unit) {
+                        delay(3000)
+                        showSnackBar = false
+                    }
+                }
             }
         }
     }
@@ -147,7 +162,7 @@ fun HomeScreenContent(
     viewModel: WeatherViewModel,
     currentWeather: WeatherEntity?,
     forecastData: ForecastEntity?,
-    message: String
+    message: String,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -156,10 +171,10 @@ fun HomeScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item { DayFeelsLike(
-            weatherCondition = currentWeather!!.description,
+            weatherCondition = viewModel.getLocalizedWeatherDescription(currentWeather!!.description),
             feelsLikeTemp = viewModel.getConvertedTemperature(currentWeather.feelsLike),
-            type = viewModel.getTemperatureSymbol(),
             iconCode = DrawableUtils.getWeatherIconDrawable(currentWeather.icon),
+            tempUnit = viewModel.getTemperatureSymbol(),
             dayLabel = stringResource(R.string.today),
             dateLabel = viewModel.getCurrentDay()
         )
@@ -167,7 +182,7 @@ fun HomeScreenContent(
         item { Spacer(modifier = Modifier.height(20.dp)) }
         item { TemperatureDisplay(
                 temperature = viewModel.getConvertedTemperature(currentWeather!!.temp),
-                type = viewModel.getTemperatureSymbol()
+                tempUnit = viewModel.getTemperatureSymbol()
             )
         }
         item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -193,14 +208,14 @@ fun HomeScreenContent(
         }
         item { currentWeather.let {
                 DailyDetails(
-                    pressure = it?.pressure?.toString() ?: "N/A",
+                    pressure = viewModel.covertNumbers(it?.pressure.toString()),
                     windSpeed = viewModel.getConvertedWindSpeed(it?.speed ?: 0.0),
                     speedUnit = viewModel.getSpeedUnit(),
                     tempMax = viewModel.getConvertedTemperature(it?.tempMax ?: 0.0),
                     tempMin = viewModel.getConvertedTemperature(it?.tempMin ?: 0.0),
                     tempType = viewModel.getTemperatureSymbol(),
-                    humidity = it?.humidity?.toString() ?: "N/A",
-                    clouds = it?.clouds?.toString() ?: "N/A"
+                    humidity = viewModel.covertNumbers(it?.humidity.toString()),
+                    clouds = viewModel.covertNumbers(it?.clouds.toString())
                 )
             } }
         item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -239,7 +254,7 @@ fun HomeScreenContent(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String,type: String, iconCode: Int, dayLabel: String, dateLabel: String) {
+fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String, tempUnit :String,iconCode: Int, dayLabel: String, dateLabel: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -248,8 +263,8 @@ fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String,type: String, i
     ) {
         Card(
             modifier = Modifier
-                .weight(1f)
-                .size(180.dp, 50.dp),
+                .size(180.dp, 60.dp)
+                .align(Alignment.CenterVertically),
             colors = CardDefaults.cardColors(Color.Transparent)
         ) {
             Column(horizontalAlignment = Alignment.Start) {
@@ -267,8 +282,8 @@ fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String,type: String, i
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
-                        text = stringResource(R.string.feels_like)+feelsLikeTemp+type,
-                        fontSize = 14.sp,
+                        text = stringResource(R.string.feels_like)+feelsLikeTemp+tempUnit,
+                        fontSize = 16.sp,
                         color = Color.White
                     )
                 }
@@ -277,7 +292,7 @@ fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String,type: String, i
 
         Card(
             modifier = Modifier
-                .size(150.dp, 50.dp)
+                .size(150.dp, 60.dp)
                 .align(Alignment.CenterVertically),
             colors = CardDefaults.cardColors(Color.Transparent)
         ) {
@@ -293,11 +308,11 @@ fun DayFeelsLike(weatherCondition: String, feelsLikeTemp: String,type: String, i
 }
 
 @Composable
-fun TemperatureDisplay(temperature: String,type: String) {
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
+fun TemperatureDisplay(temperature: String,tempUnit: String) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
         Row(
             verticalAlignment = Alignment.Top
         ) {
@@ -308,7 +323,7 @@ fun TemperatureDisplay(temperature: String,type: String) {
                 color = Color.White
             )
             Text(
-                text = type,
+                text = tempUnit,
                 fontSize = 20.sp,
                 color = Color.White,
                 modifier = Modifier.padding(start = 4.dp)
@@ -392,6 +407,7 @@ fun DailyDetails(
     humidity: String,
     clouds: String
 ) {
+    val pressureUnit = stringResource(R.string.hpa)
     ElevatedCard(
         modifier = Modifier
             .padding(4.dp)
@@ -407,20 +423,20 @@ fun DailyDetails(
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                WeatherDetailItem(
+                WeatherDetailsItem(
                     icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.pressure_icon)),
                     label = stringResource(R.string.pressure),
-                    value = pressure+ stringResource(R.string.hpa)
+                    value = "$pressure $pressureUnit"
                 )
-                WeatherDetailItem(
+                WeatherDetailsItem(
                     icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.temp_max_icon)),
                     label = stringResource(R.string.temp_max),
-                    value = tempMax+tempType
+                    value = "$tempMax $tempType"
                 )
-                WeatherDetailItem(
+                WeatherDetailsItem(
                     icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.wind_speed_icon)),
                     label = stringResource(R.string.wind_speed),
-                    value = windSpeed+speedUnit
+                    value = "$windSpeed $speedUnit"
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -431,17 +447,17 @@ fun DailyDetails(
                     .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                WeatherDetailItem(
+                WeatherDetailsItem(
                     icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.humidity_icon)),
                     label = stringResource(R.string.humidity),
                     value = "$humidity%"
                 )
-                WeatherDetailItem(
+                WeatherDetailsItem(
                     icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.temp_min_icon)),
                     label = stringResource(R.string.temp_min),
-                    value = tempMin+tempType
+                    value = "$tempMin $tempType"
                 )
-                WeatherDetailItem(
+                WeatherDetailsItem(
                     icon = DrawableUtils.getWeatherIconDrawable(stringResource(R.string.clouds_icon)),
                     label = stringResource(R.string.clouds),
                     value = "$clouds%"
