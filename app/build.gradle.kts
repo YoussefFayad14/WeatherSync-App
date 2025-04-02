@@ -73,6 +73,7 @@ dependencies {
     implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     testImplementation(libs.junit.junit)
     testImplementation(libs.junit.junit)
+    testImplementation(libs.junit.junit)
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 
     //room
