@@ -1,7 +1,6 @@
 package com.example.weathersync.ui.screens
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import com.example.weathersync.R
@@ -40,7 +39,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.weathersync.data.model.Response
-import com.example.weathersync.data.model.local.WeatherEntity
+import com.example.weathersync.data.model.local.FavoriteEntity
 import com.example.weathersync.navigation.ScreenRoute.MapScreenRoute
 import com.example.weathersync.navigation.ScreenRoute.WeatherDetailsScreenRoute
 import com.example.weathersync.ui.components.AnimatedSnackBar
@@ -50,7 +49,6 @@ import com.example.weathersync.ui.theme.DeepNavyBlue1
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.DrawableUtils
 import com.example.weathersync.viewmodel.FavoriteViewModel
-import com.google.gson.Gson
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -61,6 +59,9 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
     val favorites by favoriteViewModel.favorites.collectAsStateWithLifecycle()
     val message by favoriteViewModel.message.collectAsStateWithLifecycle()
     var showSnackBar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
+    var deletedFavorite by remember { mutableStateOf<FavoriteEntity?>(null) }
+
 
     LaunchedEffect(Unit) {
         favoriteViewModel.getFavorites()
@@ -68,10 +69,16 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
 
     LaunchedEffect(message) {
         if (message.isNotEmpty()) {
+            snackbarMessage = message
             showSnackBar = true
+            delay(5000)
+            if (showSnackBar) {
+                favoriteViewModel.clearMessage()
+                showSnackBar = false
+                deletedFavorite = null
+            }
         }
     }
-
 
     Scaffold(
         floatingActionButton = {
@@ -139,10 +146,8 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
                         items(favoriteItems, key = { "${it.lat},${it.lon}" }) { item ->
                             FavoriteItem(
                                 item,
-                                navigateTo = {
-                                    navController.navigate(WeatherDetailsScreenRoute.createRoute(item.weatherEntity))
-                                },
-                                onRemove = {
+                                onDelete = {
+                                    deletedFavorite = item
                                     favoriteViewModel.deleteFavorite(item.lat, item.lon)
                                     favoriteViewModel.setMessage(context.getString(R.string.favorite_weather_removed))
                                 },
@@ -171,14 +176,17 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
             }
         }
     }
-    if (showSnackBar) {
-        AnimatedSnackBar(message, "Success")
-        LaunchedEffect(showSnackBar) {
-            delay(5000)
-            showSnackBar = false
-            favoriteViewModel.clearMessage()
-        }
-    }
+        AnimatedSnackBar(
+            message = if (showSnackBar) snackbarMessage else null,
+            type = "Success",
+            showUndoButton = deletedFavorite != null,
+            onUndoClick = {
+                deletedFavorite?.let { favoriteViewModel.insertFavorite(it.lat, it.lon) }
+                showSnackBar = false
+                favoriteViewModel.clearMessage()
+                deletedFavorite = null
+            }
+        )
 }
 
 @Preview(showBackground = true, showSystemUi = true)
