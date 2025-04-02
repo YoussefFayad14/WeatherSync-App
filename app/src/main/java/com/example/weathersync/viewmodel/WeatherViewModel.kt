@@ -15,6 +15,7 @@ import com.example.weathersync.data.model.local.ForecastEntity
 import com.example.weathersync.data.repository.WeatherRepositoryImpl
 import com.example.weathersync.utils.LocationProvider
 import com.example.weathersync.data.model.local.WeatherEntity
+import com.example.weathersync.data.repository.WeatherRepository
 import com.example.weathersync.utils.DrawableUtils
 import com.example.weathersync.utils.NetworkHelper
 import com.example.weathersync.utils.SharedPreferencesHelper
@@ -30,7 +31,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class WeatherViewModel(private val context: Context, private val repository: WeatherRepositoryImpl) : ViewModel() {
+class WeatherViewModel(
+    private val context: Context,
+    private val repository: WeatherRepository
+) : ViewModel() {
     private val locationProvider = LocationProvider(context)
     private val _location = MutableStateFlow<Pair<Double?, Double>?>(Pair(0.0, 0.0))
     val location = _location.asStateFlow()

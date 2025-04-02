@@ -10,7 +10,9 @@ import com.example.weathersync.data.mapper.toWeatherEntity
 import com.example.weathersync.data.model.Response
 import com.example.weathersync.data.model.local.FavoriteEntity
 import com.example.weathersync.data.model.local.WeatherEntity
+import com.example.weathersync.data.repository.FavoriteRepository
 import com.example.weathersync.data.repository.FavoriteRepositoryImpl
+import com.example.weathersync.data.repository.WeatherRepository
 import com.example.weathersync.data.repository.WeatherRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,8 +24,8 @@ import java.util.Locale
 
 class FavoriteViewModel(
     private val context: Context,
-    private val repository: FavoriteRepositoryImpl,
-    private val weatherRepository: WeatherRepositoryImpl
+    private val repository: FavoriteRepository,
+    private val weatherRepository: WeatherRepository
 
 ): ViewModel() {
     private val _favorites = MutableStateFlow<Response<List<FavoriteEntity>>>(Response.Loading)
