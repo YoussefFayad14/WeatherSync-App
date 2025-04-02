@@ -20,7 +20,7 @@ import kotlinx.coroutines.tasks.await
 class SearchViewModel(context: Context) : ViewModel() {
     init {
         if (!Places.isInitialized()) {
-            Places.initialize(context.applicationContext, PLACES_API_KEY)
+           Places.initialize(context.applicationContext, PLACES_API_KEY)
         }
     }
     private val placesClient: PlacesClient = Places.createClient(context)

@@ -157,7 +157,6 @@ fun MapScreen(
                     onCancel = { showBottomSheet = false },
                     onSave = {
                         selectedLocation?.let { location ->
-                            Log.d("MapScreen", "Saving location: $isSettingsChanged")
                             if (isSettingsChanged && isLocationConfirmed) {
                                 SharedPreferencesHelper.saveLocation(
                                     context,
