@@ -20,6 +20,7 @@ import com.example.weathersync.utils.NetworkHelper
 import com.example.weathersync.utils.SharedPreferencesHelper
 import com.example.weathersync.utils.WeatherUtils
 import com.example.weathersync.utils.WeatherUtils.getTemperatureUnitSymbol
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,119 +41,115 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
     private val _forecastWeather = MutableStateFlow<Response<ForecastEntity>>(Response.Loading)
     val forecastWeather = _forecastWeather.asStateFlow()
 
-    fun loadCurrentWeather() { viewModelScope.launch {
-            getCurrentLocation(context as Activity)
-            val lastLocation = repository.getLastLocation()
-            val lastUpdatedWeather = repository.getLastUpdatedWeather()?:0
-            val currentTime = System.currentTimeMillis()
-            val threeHoursMillis = 3 * 60 * 60 * 1000
-
-            if (lastLocation != null && location.value != null
-                && location.value!!.first != 0.0 && location.value!!.second != 0.0
-                && lastLocation.first.toInt() == location.value?.first?.toInt()
-                && lastLocation.second.toInt() == location.value?.second?.toInt()
-                && currentTime - lastUpdatedWeather < threeHoursMillis
-            ) {
-                repository.getCachedWeather()
-                    .catch { ex -> _message.value = "Error: ${ex.message}" }
-                    .collect { response ->
-                        if (response is Response.Success) {
-                            response.data.map {
-                                _currentWeather.value = Response.Success(it)
-                            }
-                        }
-                    }
-            } else {
-                if (NetworkHelper.isNetworkAvailable(context)) {
-                    repository.getCurrentWeather(location.value!!.first!!, location.value!!.second)
-                        .catch { ex -> _message.value = "Error: ${ex.message}" }
-                        .collect { response ->
-                            if (response is Response.Success) {
-                                response.data?.let {
-                                    val weatherEntity = it.toWeatherEntity().copy(
-                                        timestamp = System.currentTimeMillis()
-                                    )
-                                    weatherEntity.address = getAddressFromLocation()
-                                    repository.clearWeather()
-                                    repository.saveWeather(weatherEntity)
-                                    _currentWeather.value = Response.Success(weatherEntity)
-                                }
-                            }
-                        }
-                } else {
+    fun loadCurrentWeather() {
+        viewModelScope.launch(Dispatchers.IO) {
+            var currentLocation = SharedPreferencesHelper.getLocation(context)
+            var address = ""
+            if (currentLocation.first != 0.0 && currentLocation.second != 0.0) {
+                _location.value = currentLocation
+                address = getAddressFromLocation()
+                if (NetworkHelper.isNetworkAvailable(context)){
+                    fetchCurrentWeather(location.value!!.first!!, location.value!!.second, address)
+                }else{
                     _message.value = context.getString(R.string.no_internet_connection)
-                    repository.getCachedWeather()
-                        .catch { ex -> _message.value = "Error: ${ex.message}" }
-                        .collect { response ->
-                            if (response is Response.Success) {
-                                response.data?.map {
-                                    _currentWeather.value = Response.Success(it)
-                                }
-                            }
-                        }
+                    getCachedCurrentWeather()
+                }
+            }else{
+                getCurrentLocation(context as Activity)
+                if (location.value?.first != 0.0 && location.value?.second != 0.0) {
+                    address = getAddressFromLocation()
+                    if (NetworkHelper.isNetworkAvailable(context)){
+                        fetchCurrentWeather(location.value!!.first!!, location.value!!.second, address)
+                    }else{
+                        _message.value = context.getString(R.string.no_internet_connection)
+                        getCachedCurrentWeather()
+                    }
                 }
             }
-        } }
+        }
+    }
 
-    fun loadForecast() { viewModelScope.launch {
-        val currentTime = System.currentTimeMillis()
-        val twentyFourHoursMillis = 24 * 60 * 60 * 1000
-        val lastUpdatedTime = repository.getLastUpdatedForecast()?:0
+    fun loadForecast() {
+            viewModelScope.launch(Dispatchers.IO) {
+            if (location.value!!.first != 0.0 && location.value!!.second != 0.0) {
+                if (NetworkHelper.isNetworkAvailable(context)) {
+                    fetchForecast(location.value!!.first!!, location.value!!.second)
+                } else {
+                    getCachedForecast()
+                }
+            } else {
+               getCachedForecast()
+            }
+        }
+    }
 
-        if (location.value != null
-            && location.value!!.first != 0.0
-            && location.value!!.second != 0.0
-            && currentTime - lastUpdatedTime < twentyFourHoursMillis
-            ) {
-                repository.getCachedForecast()
-                    .catch { ex -> _message.value = "Error: ${ex.message}" }
-                    .collect { response ->
-                        if (response is Response.Success) {
-                            response.data.map {
-                                _forecastWeather.value = Response.Success(it)
-                            }
+    private fun getCachedCurrentWeather() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.getCachedWeather()
+                .catch { ex -> _message.value = "Error: ${ex.message}" }
+                .collect { response ->
+                    response.map {
+                        _currentWeather.value = Response.Success(it)
+                    }
+                }
+        }
+    }
+
+    private fun getCachedForecast() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.getCachedForecast()
+                .catch { ex -> _message.value = "Error: ${ex.message}" }
+                .collect { response ->
+                    response.map {
+                        _forecastWeather.value = Response.Success(it)
+                    }
+                }
+        }
+    }
+
+    private fun fetchCurrentWeather(lat: Double, lon: Double,address: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.getCurrentWeather(lat, lon)
+                .catch { ex -> _message.value = "Error: ${ex.message}" }
+                .collect { response ->
+                    if (response is Response.Success) {
+                        response.data?.let {
+                            val weatherEntity = it.toWeatherEntity().copy(
+                                timestamp = System.currentTimeMillis()
+                            )
+                            weatherEntity.address = address?: "Unknown Address"
+                            repository.clearWeather()
+                            repository.saveWeather(weatherEntity)
+                            _currentWeather.value = Response.Success(weatherEntity)
                         }
                     }
-            } else {
-                if (NetworkHelper.isNetworkAvailable(context)) {
-                    repository.getForecast(location.value!!.first!!, location.value!!.second)
-                        .catch { ex -> _message.value = "Error: ${ex.message}" }
-                        .collect { response ->
-                            if (response is Response.Success) {
-                                response.data.let {
-                                    val forecastEntity = it.toForecastEntity().copy(
-                                        timestamp = System.currentTimeMillis()
-                                    )
-                                    repository.clearForecast()
-                                    repository.saveForecast(forecastEntity)
-                                    _forecastWeather.value = Response.Success(forecastEntity)
-                                }
-                            }
-                        }
-                } else {
-                    _message.value = context.getString(R.string.no_internet_connection)
-                    repository.getCachedForecast()
-                        .catch { ex -> _message.value = "Error: ${ex.message}" }
-                        .collect { response ->
-                            if (response is Response.Success) {
-                                response.data?.map {
-                                    _forecastWeather.value = Response.Success(it)
-                                }
-                            }
-                        }
                 }
-            }
-        } }
+        }
+    }
+
+    private fun fetchForecast(lat: Double, lon: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.getForecast(lat, lon)
+                .catch { ex -> _message.value = "Error: ${ex.message}" }
+                .collect { response ->
+                    if (response is Response.Success) {
+                        response.data?.let {
+                            _forecastWeather.value = Response.Success(it.toForecastEntity())
+                        }
+                    }
+                }
+        }
+    }
 
     fun getConvertedTemperature(value: Double): String {
-       return WeatherUtils.getFormattedTemperature(value, context)
+        return WeatherUtils.getFormattedTemperature(value, context)
     }
 
     fun getTemperatureSymbol(): String {
         return WeatherUtils.getTemperatureUnitSymbol(context)
     }
 
-    fun getLocalizedWeatherDescription(value: String): String{
+    fun getLocalizedWeatherDescription(value: String): String {
         return WeatherUtils.formatWeatherDescriptionForLocale(context, value)
     }
 
@@ -168,10 +165,6 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
         return WeatherUtils.getFormattedCurrentDay(context)
     }
 
-    fun getCurrentTime(): String {
-        return WeatherUtils.getFormattedTime(context)
-    }
-
     fun getCurrentDate(): String {
         return WeatherUtils.getFormattedDate(context)
     }
@@ -185,8 +178,8 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
         return WeatherUtils.getFormattedDateFromTimestamp(context, unixTime)
     }
 
-    fun covertNumbers(num: String): String{
-        return WeatherUtils.convertNumberToLocale(context,num)
+    fun covertNumbers(num: String): String {
+        return WeatherUtils.convertNumberToLocale(context, num)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -195,7 +188,7 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getHourlyForecastForToday(forecastList : List<DailyForecast>?): List<Triple<String, String, Int>> {
+    fun getHourlyForecastForToday(forecastList: List<DailyForecast>?): List<Triple<String, String, Int>> {
         return forecastList
             ?.filter { item ->
                 val date = convertUnixToDate(item.date)
@@ -233,13 +226,14 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
             ?.take(5) ?: emptyList()
     }
 
-    fun getCurrentLocation(activity: Activity){
+    fun getCurrentLocation(activity: Activity) {
         locationProvider.getUserLocation(
             callback = { latitude, longitude ->
                 if (latitude == null || longitude == null || (latitude == 0.0 && longitude == 0.0)) {
                     _message.value = "Location not available"
-                }else{
+                } else {
                     _location.value = Pair(latitude, longitude)
+                    SharedPreferencesHelper.saveLocation(context, latitude, longitude)
                 }
             },
             onError = { message ->

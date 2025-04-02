@@ -25,7 +25,7 @@ class AlarmRepositoryImpl(
         return localAlarmDataSource.getAlarmById(alarmId)
     }
 
-    override fun getAllAlarms(): Flow<Response<List<AlarmEntity>>> {
+    override fun getAllAlarms(): Flow<List<AlarmEntity>> {
         return localAlarmDataSource.getAllAlarms()
     }
 
