@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -34,11 +35,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
-
-        <meta-data
-            android:name="com.google.android.libraries.places.api.key"
-            android:value="${PLACES_API_KEY}" />
+            android:value="@string/maps_api_key"/>
 
         <receiver
             android:name=".receiver.AlarmReceiver"
@@ -51,10 +48,8 @@
 
         <service
             android:name=".service.AlarmService"
-            android:foregroundServiceType="mediaPlayback"
+            android:foregroundServiceType="mediaPlayback|microphone"
             android:exported="false"
-            android:permission="android.permission.FOREGROUND_SERVICE"
             tools:ignore="ForegroundServicePermission" />
-
     </application>
 </manifest>

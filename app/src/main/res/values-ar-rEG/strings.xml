@@ -77,6 +77,10 @@
     <string name="selected_time_02d_02d">الوقت المحدد: %02d:%02d</string>
     <string name="location_saved_successfully">تم حفظ الموقع بنجاح</string>
     <string name="please_select_a_location_first">يرجى اختيار موقع أولاً</string>
+    <string name="weather_alert">حالةالطقس الان</string>
+    <string name="weather_alert_running">التنبيه الجوي قيد التشغيل</string>
+    <string name="temperature_is">%1$s،\n درجة الحرارة %2$s °</string>
+
 
 
 </resources>
