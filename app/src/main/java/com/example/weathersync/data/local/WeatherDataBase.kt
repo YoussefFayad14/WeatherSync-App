@@ -32,7 +32,8 @@ abstract class WeatherDatabase : RoomDatabase() {
                     context.applicationContext,
                     WeatherDatabase::class.java,
                     "weather_database"
-                ).build()
+                ).fallbackToDestructiveMigration()
+                    .build()
                 instance = INSTANCE
                 INSTANCE
             }
