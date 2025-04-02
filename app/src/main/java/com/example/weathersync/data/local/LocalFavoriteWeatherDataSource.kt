@@ -10,32 +10,19 @@ import kotlinx.coroutines.withContext
 class LocalFavoriteWeatherDataSource (private val dao: FavoriteDao): LocalDataSource.ILocalFavoriteWeatherDataSource {
 
     override suspend fun insertFavorite(favorite: FavoriteEntity) {
-        withContext(Dispatchers.IO) {
-            dao.insertFavorite(favorite)
-        }
+        dao.insertFavorite(favorite)
     }
 
     override suspend fun deleteFavorite(lat: Double, lon: Double) {
-        withContext(Dispatchers.IO) {
-            dao.deleteFavorite(lat, lon)
-        }
+        dao.deleteFavorite(lat, lon)
     }
 
     override suspend fun getFavorite(lat: Double, lon: Double, ): FavoriteEntity? {
-        return withContext(Dispatchers.IO) {
-            dao.getFavorite(lat, lon)
-        }
+        return dao.getFavorite(lat, lon)
     }
 
-    override fun getAllFavorites(): Flow<Response<List<FavoriteEntity>>> = flow {
-        try {
-            emit(Response.Loading)
-            dao.getAllFavorites().collect {
-                emit(Response.Success(it))
-            }
-            } catch (e: Exception) {
-            emit(Response.Failure(e))
-        }
+    override fun getAllFavorites(): Flow<List<FavoriteEntity>> {
+        return dao.getAllFavorites()
     }
 
 }

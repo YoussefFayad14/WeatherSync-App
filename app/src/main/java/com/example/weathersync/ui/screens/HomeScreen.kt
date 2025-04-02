@@ -46,6 +46,7 @@ import com.example.weathersync.viewmodel.WeatherViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -58,10 +59,17 @@ fun HomeScreen(weatherViewModel: WeatherViewModel) {
     val message by weatherViewModel.message.collectAsStateWithLifecycle()
     var isRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberSwipeRefreshState(isRefreshing)
+    var showSnackBar by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         weatherViewModel.loadCurrentWeather()
         weatherViewModel.loadForecast()
+    }
+
+    LaunchedEffect(message) {
+        if (message.isNotEmpty()) {
+            showSnackBar = true
+        }
     }
 
     SwipeRefresh(
@@ -123,7 +131,13 @@ fun HomeScreen(weatherViewModel: WeatherViewModel) {
                     }
 
                 }
-
+                if (showSnackBar) {
+                    AnimatedSnackBar(message)
+                    LaunchedEffect(Unit) {
+                        delay(3000)
+                        showSnackBar = false
+                    }
+                }
             }
         }
     }

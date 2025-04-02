@@ -54,9 +54,9 @@ object WeatherUtils {
             "fahrenheit" -> (value - 273.15) * 9 / 5 + 32
             "kelvin" -> value
             else -> return "Error: Invalid unit ($state)"
-        }
+        }.toInt()
 
-        return String.format("%.2f", temp)
+        return "$temp"
     }
 
     @SuppressLint("DefaultLocale")

@@ -12,6 +12,7 @@ import com.example.weathersync.data.model.local.FavoriteEntity
 import com.example.weathersync.data.model.local.WeatherEntity
 import com.example.weathersync.data.repository.FavoriteRepositoryImpl
 import com.example.weathersync.data.repository.WeatherRepositoryImpl
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,7 +33,7 @@ class FavoriteViewModel(
 
     @SuppressLint("SuspiciousIndentation")
     fun insertFavorite(latitude: Double?, longitude: Double?) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             if (latitude == null || longitude == null) return@launch
             val address = getAddressFromLocation(latitude, longitude)
             var weatherEntity: WeatherEntity? = null
@@ -51,20 +52,16 @@ class FavoriteViewModel(
     }
 
     fun deleteFavorite(latitude: Double, longitude: Double) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.deleteFavorite(latitude, longitude)
         }
     }
 
     fun getFavorites() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.getAllFavorites()
                 .catch { ex -> _message.value = "Error: ${ex.message}" }
-                .collect { response ->
-                    if (response is Response.Success) {
-                        _favorites.value = Response.Success(response.data)
-                    }
-                }
+                .collect { _favorites.value = Response.Success(it) }
         }
     }
 
