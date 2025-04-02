@@ -48,7 +48,9 @@ import com.example.weathersync.ui.theme.DeepNavyBlue
 import com.example.weathersync.ui.theme.DeepNavyBlue1
 import com.example.weathersync.ui.theme.LightSeaGreen
 import com.example.weathersync.utils.DrawableUtils
+import com.example.weathersync.utils.NetworkHelper
 import com.example.weathersync.viewmodel.FavoriteViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -60,6 +62,7 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
     val message by favoriteViewModel.message.collectAsStateWithLifecycle()
     var showSnackBar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
+    var snackbarType by remember { mutableStateOf("Success") }
     var deletedFavorite by remember { mutableStateOf<FavoriteEntity?>(null) }
 
 
@@ -70,6 +73,7 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
     LaunchedEffect(message) {
         if (message.isNotEmpty()) {
             snackbarMessage = message
+            snackbarType = "Success"
             showSnackBar = true
             delay(5000)
             if (showSnackBar) {
@@ -83,7 +87,15 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(MapScreenRoute.createRoute(null, null, false)) },
+                onClick = {
+                    if (NetworkHelper.isNetworkAvailable(context)) {
+                        navController.navigate(MapScreenRoute.createRoute(null, null, false))
+                    }else{
+                        snackbarMessage = context.getString(R.string.no_internet_connection)
+                        snackbarType = "Error"
+                        showSnackBar = true
+                    }
+                          },
                 containerColor = if (isSystemInDarkTheme()) DeepNavyBlue1 else LightSeaGreen
             ) {
                 Image(
@@ -178,7 +190,7 @@ fun FavoritesScreen(navController: NavHostController, favoriteViewModel: Favorit
     }
         AnimatedSnackBar(
             message = if (showSnackBar) snackbarMessage else null,
-            type = "Success",
+            type = snackbarType,
             showUndoButton = deletedFavorite != null,
             onUndoClick = {
                 deletedFavorite?.let { favoriteViewModel.insertFavorite(it.lat, it.lon) }
