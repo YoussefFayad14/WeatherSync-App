@@ -43,6 +43,7 @@
             tools:ignore="WrongManifestParent">
             <intent-filter>
                 <action android:name="com.example.weathersync.ALARM_TRIGGER"/>
+                <action android:name="com.example.weathersync.SNOOZE_ALARM"/>
             </intent-filter>
         </receiver>
 
