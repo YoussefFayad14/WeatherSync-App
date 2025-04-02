@@ -81,5 +81,6 @@
     <string name="temperature_is">%1$s,\n Temperature is %2$s °</string>
     <string name="undo">Undo</string>
     <string name="alarm_deleted">Alarm deleted</string>
+    <string name="snooze">Snooze</string>
 
 </resources>

@@ -2,41 +2,28 @@ package com.example.weathersync.viewmodel
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.ui.text.intl.Locale
 import java.util.concurrent.TimeUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.example.weathersync.data.model.Response
 import com.example.weathersync.data.model.local.AlarmEntity
 import com.example.weathersync.data.repository.AlarmRepository
-import com.example.weathersync.utils.AlertsUtils.calculateInitialDelay
 import com.example.weathersync.worker.AlarmWorker
-import com.example.weathersync.worker.DeletePastAlarmsWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class AlarmsViewModel(
-    context: Context,
-    private val repository: AlarmRepository,
-) : ViewModel() {
+class AlarmsViewModel(private val repository: AlarmRepository) : ViewModel() {
     private val _alarms = MutableStateFlow<Response<List<AlarmEntity>>>(Response.Loading)
     val alarms = _alarms.asStateFlow()
     private val _message = MutableStateFlow("")
     val message = _message.asStateFlow()
-
-    init {
-        scheduleDailyAlarmCleanup(context)
-    }
 
     fun insertAlarm(timeMillis: Long) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -70,6 +57,7 @@ class AlarmsViewModel(
         val currentTime = System.currentTimeMillis()
         val delay = triggerTimeMillis - currentTime
         val uniqueId = "AlarmWorker_$triggerTimeMillis"
+        Log.d("AlarmWorker", "Scheduling alarm with tag: $uniqueId")
 
         if (delay <= 0) {
             return false
@@ -91,8 +79,9 @@ class AlarmsViewModel(
     fun deleteScheduledAlarm(context: Context, triggerTimeMillis: Long) {
         val workManager = WorkManager.getInstance(context)
         val uniqueTag = "AlarmWorker_$triggerTimeMillis"
+        Log.d("AlarmWorker", "Deleting scheduled alarm with tag: $uniqueTag")
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val workInfos = workManager.getWorkInfosByTag(uniqueTag).get()
 
@@ -111,26 +100,5 @@ class AlarmsViewModel(
                 Log.e("AlarmWorker", "Error fetching work info: ${e.message}")
             }
         }
-    }
-
-    fun scheduleDailyAlarmCleanup(context: Context) {
-        val initialDelay = calculateInitialDelay()
-        val workRequest = PeriodicWorkRequestBuilder<DeletePastAlarmsWorker>(
-            24, TimeUnit.HOURS
-        )
-            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiresBatteryNotLow(true)
-                    .build()
-            )
-            .addTag("DailyAlarmCleanupWorker")
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            "DailyAlarmCleanupWorker",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            workRequest
-        )
     }
 }

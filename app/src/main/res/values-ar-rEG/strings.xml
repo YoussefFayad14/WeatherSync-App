@@ -82,5 +82,6 @@
     <string name="temperature_is">%1$s،\n درجة الحرارة %2$s °</string>
     <string name="undo">تراجع</string>
     <string name="alarm_deleted">تم حذف المنبه</string>
+    <string name="snooze">تأجيل</string>
 
 </resources>

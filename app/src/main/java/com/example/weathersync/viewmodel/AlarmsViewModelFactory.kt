@@ -11,7 +11,6 @@ class AlarmsViewModelFactory (private val context: Context) : ViewModelProvider.
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AlarmsViewModel::class.java)) {
             return AlarmsViewModel(
-                context,
                 AlarmRepositoryImpl(
                     LocalAlarmDataSource(WeatherDatabase.getInstance(context).alarmDao())
                 )

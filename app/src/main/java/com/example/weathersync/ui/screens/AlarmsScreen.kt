@@ -1,6 +1,7 @@
 package com.example.weathersync.ui.screens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -124,17 +125,29 @@ fun AlertsScreen(alertViewModel: AlarmsViewModel) {
                         items(alarmList, key = { it.id }) { alarm ->
                             val alarmData =
                                 AlertsUtils.convertTimeMillisToDayHourMinute(alarm.timeMillis)
-                            AlarmItem(
-                                day = AlertsUtils.convertNumber(alarmData.first),
-                                time = "${AlertsUtils.convertNumber(alarmData.second)}:${AlertsUtils.convertNumber(alarmData.third)}",
-                                onDelete = {
-                                    deletedAlarm = alarm
-                                    alertViewModel.deleteAlarm(alarm.id)
-                                    alertViewModel.deleteScheduledAlarm(context, alarm.timeMillis)
-                                    isAlarmRemove = true
-                                },
-                                modifier = Modifier.animateItemPlacement(tween(200))
-                            )
+                            if (alertViewModel.isPastAlarm(alarm.timeMillis)) {
+                                alertViewModel.deleteAlarm(alarm.id)
+                                alertViewModel.deleteScheduledAlarm(context, alarm.timeMillis)
+                            }else {
+                                AlarmItem(
+                                    day = AlertsUtils.convertNumber(alarmData.first),
+                                    time = "${AlertsUtils.convertNumber(alarmData.second)}:${
+                                        AlertsUtils.convertNumber(
+                                            alarmData.third
+                                        )
+                                    }",
+                                    onDelete = {
+                                        deletedAlarm = alarm
+                                        alertViewModel.deleteAlarm(alarm.id)
+                                        alertViewModel.deleteScheduledAlarm(
+                                            context,
+                                            alarm.timeMillis
+                                        )
+                                        isAlarmRemove = true
+                                    },
+                                    modifier = Modifier.animateItemPlacement(tween(200))
+                                )
+                            }
                         }
                     }
                 }
@@ -195,6 +208,7 @@ fun AlertsScreen(alertViewModel: AlarmsViewModel) {
             onTimeSelected = { hour, minute, day ->
                 showBottomSheet = false
                 val alarmData = AlertsUtils.convertDayHourMinuteToTimeMillis(day, hour, minute)
+                Log.w("AlarmWorker", "Alarm data: $alarmData")
                 if(!alertViewModel.isPastAlarm(alarmData)) {
                     alertViewModel.insertAlarm(alarmData)
                     isAlarmScheduled = alertViewModel.scheduleAlarm(context, alarmData)

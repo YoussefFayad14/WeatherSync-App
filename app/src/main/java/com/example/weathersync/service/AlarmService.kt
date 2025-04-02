@@ -12,7 +12,6 @@ import android.os.*
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -28,7 +27,6 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
     private val notificationId = 1
     private var isTtsInitialized = false
     private var ringtone: Ringtone? = null
-    private var alarmManager: AlarmManager? = null
     private var message: String? = null
     private var isPlayingSound = false
 
@@ -53,8 +51,6 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
             startForeground(notificationId, initialNotification)
         }
 
-        alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-
         val temperature = intent?.getDoubleExtra("temperature", 0.0)
         val description = intent?.getStringExtra("description")
         val humidity = intent?.getIntExtra("humidity", 0)
@@ -62,8 +58,8 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
 
         if (temperature != null && description != null && currentTemperatureUnit != null) {
             val temp = WeatherUtils.getFormattedTemperature(temperature, this)
-            message = getString(R.string.weather_alert)+
-                    getString(R.string.temperature_is, description, temp) + "$currentTemperatureUnit,"+
+            message = getString(R.string.temperature_is, description, temp)+
+                    "$currentTemperatureUnit,\n"+
                     getString(R.string.humidity)+"$humidity%"
 
             updateNotification(getString(R.string.weather_alert), message ?: getString(R.string.weather_alert_running))
@@ -184,6 +180,18 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        val snoozeIntent = Intent("com.example.weathersync.SNOOZE_ALARM").apply {
+            setPackage(packageName)
+        }
+
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            this,
+            2000,
+            snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         stopForeground(STOP_FOREGROUND_REMOVE)
         val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.app_logo)
@@ -193,6 +201,7 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
             .setContentIntent(pendingIntent)
             .setSilent(true)
             .setAutoCancel(true)
+            .addAction(R.drawable.ic_snooze, getString(R.string.snooze), snoozePendingIntent)
             .build()
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
