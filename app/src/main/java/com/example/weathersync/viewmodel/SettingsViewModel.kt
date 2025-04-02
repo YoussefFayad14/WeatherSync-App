@@ -41,10 +41,19 @@ class SettingsViewModel(context: Context) : ViewModel() {
         _selectedLanguage.value = SettingUtils.fromSharedPreferencesLanguage(storedLanguage)
     }
 
-    fun setTempUnit(context: Context, unit: String) {
+    fun setTempUnit(context: Context, unit: String, isInternalCall: Boolean = false) {
         val storedUnit = SettingUtils.toSharedPreferencesTemp(unit)
         SharedPreferencesHelper.saveSetting(context, SharedPreferencesHelper.KEY_TEMP_UNIT, storedUnit)
         _selectedTempUnit.value = SettingUtils.fromSharedPreferencesTemp(storedUnit)
+
+        if (!isInternalCall) {
+            val windUnit = if (storedUnit == "Fahrenheit") {
+                context.getString(R.string.mile_hour) // Fahrenheit → miles/hour
+            } else {
+                context.getString(R.string.meter_sec) // Celsius/Kelvin → meters/sec
+            }
+            setWindSpeedUnit(context, windUnit, isInternalCall = true)
+        }
     }
 
     fun setLocationType(context: Context, locationType: String) {
@@ -53,10 +62,20 @@ class SettingsViewModel(context: Context) : ViewModel() {
         _selectedLocationType.value = SettingUtils.fromSharedPreferencesLocation(storeLocationType)
     }
 
-    fun setWindSpeedUnit(context: Context, unit: String) {
+    fun setWindSpeedUnit(context: Context, unit: String, isInternalCall: Boolean = false) {
         val storedUnit = SettingUtils.toSharedPreferencesWind(unit)
         SharedPreferencesHelper.saveSetting(context, SharedPreferencesHelper.KEY_WIND_SPEED_UNIT, storedUnit)
         _selectedWindSpeedUnit.value = SettingUtils.fromSharedPreferencesWind(storedUnit)
+
+        if (!isInternalCall) {
+            val expectedTempUnit = if (storedUnit == "Mile_Hour") {
+                context.getString(R.string.fahrenheit_f) // Miles/hour → Fahrenheit
+            } else {
+                context.getString(R.string.celsius_c) // Meters/sec → Celsius/Kelvin
+            }
+            setTempUnit(context, expectedTempUnit, isInternalCall = true)
+
+        }
     }
 
     @SuppressLint("SuspiciousIndentation")

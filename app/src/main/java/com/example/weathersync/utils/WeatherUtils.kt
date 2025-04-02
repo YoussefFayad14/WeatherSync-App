@@ -11,6 +11,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.roundToInt
 
 object WeatherUtils {
     fun formatWeatherDescriptionForLocale(context: Context, description: String): String {
@@ -54,9 +55,9 @@ object WeatherUtils {
             "fahrenheit" -> (value - 273.15) * 9 / 5 + 32
             "kelvin" -> value
             else -> return "Error: Invalid unit ($state)"
-        }.toInt()
+        }
 
-        return "$temp"
+        return String.format("%d", temp.roundToInt())
     }
 
     @SuppressLint("DefaultLocale")

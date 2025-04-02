@@ -71,14 +71,10 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
 
     fun loadForecast() {
             viewModelScope.launch(Dispatchers.IO) {
-            if (location.value!!.first != 0.0 && location.value!!.second != 0.0) {
-                if (NetworkHelper.isNetworkAvailable(context)) {
-                    fetchForecast(location.value!!.first!!, location.value!!.second)
-                } else {
-                    getCachedForecast()
-                }
+            if (NetworkHelper.isNetworkAvailable(context)) {
+                fetchForecast(location.value!!.first!!, location.value!!.second)
             } else {
-               getCachedForecast()
+                getCachedForecast()
             }
         }
     }
@@ -134,6 +130,8 @@ class WeatherViewModel(private val context: Context, private val repository: Wea
                 .collect { response ->
                     if (response is Response.Success) {
                         response.data?.let {
+                            repository.clearForecast()
+                            repository.saveForecast(it.toForecastEntity())
                             _forecastWeather.value = Response.Success(it.toForecastEntity())
                         }
                     }
